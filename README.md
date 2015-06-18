@@ -10,5 +10,6 @@ For example:
         dispatcher=Dispatcher,
         source_dir=source_dir,
         destination_dir=destination_dir,
-        exclude_existing_files=True)
+        exclude_existing_files=True,
+        file_suffix='.pdf')
     server.watch()
