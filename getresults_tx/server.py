@@ -64,6 +64,7 @@ class Server(BaseDispatcher):
                  source_dir=None, destination_dir=None, archive_dir=None,
                  file_prefix=None, file_suffix=None, exclude_existing_files=None,
                  mkdir_local=None, mkdir_remote=None):
+
         super(Server, self).__init__(hostname, timeout)
         self.dispatcher = dispatcher(hostname, timeout) or BaseDispatcher(hostname, timeout)
         self.hostname = hostname or 'localhost'
@@ -89,14 +90,25 @@ class Server(BaseDispatcher):
         dispatcher.remote_folder = self.remote_folder
         return dispatcher
 
-    def serve_forever(self):
-        """Watches the source_dir for new files and copies them to the destination_dir."""
+    def watch(self):
+        """Watches the source_dir for new files and copies them to the destination_dir.
+
+        For example:
+            >>> server = Server(
+                    Dispatcher,
+                    hostname='localhost',
+                    source_dir=<source_dir>,
+                    destination_dir=<destination_dir>,
+                    file_suffix='txt'
+                )
+            >>> server.watch()
+        """
         before = self.before()
         while 1:
             time.sleep(5)
-            before = self.watch(before)
+            before = self.watch_once(before)
 
-    def watch(self, before):
+    def watch_once(self, before):
         """Moves files in source_dir to destination_dir.
 
         Returns the "after" list which is a list of filenames currently in source_dir.
