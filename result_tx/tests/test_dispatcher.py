@@ -20,37 +20,37 @@ from ..server import Server
 class TestDispatcher(TestCase):
 
     def test_folder(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/in')
-        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/out')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         server = Server(dispatcher=Dispatcher, source_dir=source_dir, destination_dir=destination_dir)
         self.assertEquals(source_dir, server.source_dir)
         self.assertEquals(destination_dir, server.destination_dir)
         self.assertFalse(server.archive_dir)
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/in/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
         server = Server(
             dispatcher=Dispatcher, source_dir=source_dir, destination_dir=destination_dir, archive_dir=archive_dir)
         self.assertEquals(archive_dir, server.archive_dir)
 
     def test_bad_folder(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/innnnnn')
-        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/out')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inboxnnnnn')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         self.assertRaises(
             FileNotFoundError,
             Server, dispatcher=Dispatcher, source_dir=source_dir, destination_dir=destination_dir)
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/in')
-        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outttt')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outboxttt')
         self.assertRaises(
             FileNotFoundError,
             Server, dispatcher=Dispatcher, source_dir=source_dir, destination_dir=destination_dir)
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/in/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
         self.assertRaises(
             FileNotFoundError,
             Server, dispatcher=Dispatcher, source_dir=source_dir, destination_dir=destination_dir,
             archive_dir=archive_dir)
 
     def test_make_local_folder(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/in')
-        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/out')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, '/tmp/tmp_archive')
         self.assertRaises(
             FileNotFoundError,
@@ -69,7 +69,7 @@ class TestDispatcher(TestCase):
             os.rmdir('/tmp/tmp_result_tx_out')
         except IOError:
             pass
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/in')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join('/tmp/tmp_result_tx_out')
         self.assertRaises(
             FileNotFoundError,
@@ -92,8 +92,8 @@ class TestDispatcher(TestCase):
 
     def test_added_file(self):
         """Asserts an added file is moved to the destination."""
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/in')
-        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/out')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         server = Server(
             dispatcher=Dispatcher, source_dir=source_dir, destination_dir=destination_dir,
             exclude_existing_files=True)
