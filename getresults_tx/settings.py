@@ -38,7 +38,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'result_tx',
+    'getresults_tx',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -52,7 +52,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.security.SecurityMiddleware',
 )
 
-ROOT_URLCONF = 'result_tx.urls'
+ROOT_URLCONF = 'getresults_tx.urls'
 
 TEMPLATES = [
     {
@@ -72,7 +72,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'result_tx.wsgi.application'
+WSGI_APPLICATION = 'getresults_tx.wsgi.application'
 
 
 # Database

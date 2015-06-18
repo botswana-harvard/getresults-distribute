@@ -66,11 +66,11 @@ class TestDispatcher(TestCase):
 
     def test_make_remote_folder(self):
         try:
-            os.rmdir('/tmp/tmp_result_tx_out')
+            os.rmdir('/tmp/tmp_getresults_tx_out')
         except IOError:
             pass
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
-        destination_dir = os.path.join('/tmp/tmp_result_tx_out')
+        destination_dir = os.path.join('/tmp/tmp_getresults_tx_out')
         self.assertRaises(
             FileNotFoundError,
             Server, dispatcher=Dispatcher, source_dir=source_dir, destination_dir=destination_dir)
@@ -86,7 +86,7 @@ class TestDispatcher(TestCase):
             Server,
         )
         try:
-            os.rmdir('/tmp/tmp_result_tx_out')
+            os.rmdir('/tmp/tmp_getresults_tx_out')
         except IOError:
             pass
 

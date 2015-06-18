@@ -3,8 +3,8 @@ import sys
 
 from django.core.management.base import BaseCommand, CommandError
 
-from result_tx.server import Server
-from result_tx.dispatcher import Dispatcher
+from getresults_tx.server import Server
+from getresults_tx.dispatcher import Dispatcher
 
 
 class Command(BaseCommand):

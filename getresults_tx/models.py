@@ -50,7 +50,7 @@ class History(models.Model):
         max_length=50)
 
     class Meta:
-        app_label = 'result_tx'
+        app_label = 'getresults_tx'
         ordering = ('-sent_datetime', )
 
 
@@ -66,5 +66,5 @@ class RemoteFolder(models.Model):
         max_length=10)
 
     class Meta:
-        app_label = 'result_tx'
+        app_label = 'getresults_tx'
         unique_together = (('folder', 'base_path'), ('folder', 'folder_hint'))
