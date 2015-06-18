@@ -8,6 +8,7 @@ For example:
     destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
     server = Server(
         dispatcher=Dispatcher,
+        hostname='example.com',
         source_dir=source_dir,
         destination_dir=destination_dir,
         exclude_existing_files=True,
