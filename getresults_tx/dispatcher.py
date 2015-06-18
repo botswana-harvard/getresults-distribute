@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2015 Erik van Widenfelt
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 import os
 import pytz
 import socket
@@ -9,7 +18,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from .models import History, RemoteFolder, TX_SENT
-from .server import Dispatcher as BaseDispatcher
+from .server import BaseDispatcher
 
 tz = pytz.timezone(settings.TIME_ZONE)
 

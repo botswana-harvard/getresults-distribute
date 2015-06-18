@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2015 Erik van Widenfelt
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 import os
 import pwd
 import time
@@ -7,7 +16,7 @@ from paramiko import SSHClient
 from paramiko.ssh_exception import BadHostKeyException, AuthenticationException
 
 
-class Dispatcher(object):
+class BaseDispatcher(object):
 
     def __init__(self, hostname=None, timeout=None):
         self.hostname = hostname or 'localhost'
@@ -15,10 +24,19 @@ class Dispatcher(object):
         self.user = pwd.getpwuid(os.getuid()).pw_name
 
     def on_added(self, added):
-        print('Added: {}'.format(', '.join(added)))
+        """Override for your needs.
+
+        :param added: list of file names added to source_dir
+        """
+        pass
 
     def on_removed(self, removed):
-        print('Removed: {}'.format(', '.join(removed)))
+        """Override for your needs.
+
+        :param removed: list of file names removed from source_dir
+               and put in the destination_dir
+        """
+        pass
 
     def connect(self):
         """Returns an ssh instance."""
@@ -40,17 +58,19 @@ class Dispatcher(object):
         return ssh
 
 
-class Server(Dispatcher):
+class Server(BaseDispatcher):
 
     def __init__(self, dispatcher, hostname=None, timeout=None,
                  source_dir=None, destination_dir=None, archive_dir=None,
-                 file_ext=None, exclude_existing_files=None, mkdir_local=None, mkdir_remote=None):
+                 file_prefix=None, file_suffix=None, exclude_existing_files=None,
+                 mkdir_local=None, mkdir_remote=None):
         super(Server, self).__init__(hostname, timeout)
-        self.dispatcher = dispatcher(hostname, timeout) or Dispatcher(hostname, timeout)
+        self.dispatcher = dispatcher(hostname, timeout) or BaseDispatcher(hostname, timeout)
         self.hostname = hostname or 'localhost'
         self.port = 22
         self.timeout = timeout or 5.0
-        self.file_ext = file_ext or '.pdf'
+        self.file_prefix = file_prefix
+        self.file_suffix = file_suffix
         self.mkdir_remote = mkdir_remote
         self.mkdir_local = mkdir_local
         self.exclude_existing_files = exclude_existing_files
@@ -77,10 +97,16 @@ class Server(Dispatcher):
             before = self.watch(before)
 
     def watch(self, before):
+        """Moves files in source_dir to destination_dir.
+
+        Returns the "after" list which is a list of filenames currently in source_dir.
+
+        Calls on_added and on_removed handlers."""
         after = []
         for f in os.listdir(self.source_dir):
             if os.path.isfile(os.path.join(self.source_dir, f)):
                 after.append(f)
+        after = self.filter_by_filetype(after)
         added = [f for f in after if f not in before]
         removed = [f for f in before if f not in after]
         if added:
@@ -90,16 +116,17 @@ class Server(Dispatcher):
         return after
 
     def before(self):
-        """Returns a list of files in the source_dir BEFORE a watch loop session begins."""
+        """Returns a list of files in the source_dir before the watch loop begins."""
         before = []
         if self.exclude_existing_files:
             for f in os.listdir(self.source_dir):
                 if os.path.isfile(os.path.join(self.source_dir, f)):
                     before.append(f)
+        before = self.filter_by_filetype(before)
         return before
 
     def local_folder(self, path):
-        """Returns the path or raises an Exception is it does not exist."""
+        """Returns the path or raises an Exception if path does not exist."""
         path = os.path.expanduser(path)
         if not os.path.exists(path):
             if self.mkdir_local:
@@ -109,7 +136,7 @@ class Server(Dispatcher):
         return path
 
     def remote_folder(self, path):
-        """Returns the path or raises an Exception is it does not exist."""
+        """Returns the path or raises an Exception if path does not exist on the remote host."""
         path = os.path.expanduser(path)
         ssh = self.connect()
         with SFTPClient.from_transport(ssh.get_transport()) as sftp:
@@ -123,14 +150,17 @@ class Server(Dispatcher):
         return path
 
     def filter_by_filetype(self, listdir):
-        """Returns a filtered list if the file extension has been specified."""
-        print(listdir)
-        if not self.file_ext:
+        """Returns listdir as is or filtered by prefix and/or suffix."""
+        if not self.file_prefix and not self.file_suffix:
             return listdir
-        return [f for f in listdir if f.endswith('.{}'.format(self.file_ext))]
+        lst = []
+        for f in listdir:
+            if f.startswith(self.file_prefix or '') and f.endswith(self.file_suffix or ''):
+                lst.append(f)
+        return lst
 
     def mkdir_p(self, sftp, remote_directory):
-        """Change to this directory, recursively making new folders if needed.
+        """Changes to this directory, recursively making new folders if needed.
         Returns True if any folders were created."""
         if self.mkdir_remote:
             if remote_directory == '/':

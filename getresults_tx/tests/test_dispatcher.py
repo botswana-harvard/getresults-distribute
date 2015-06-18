@@ -104,3 +104,124 @@ class TestDispatcher(TestCase):
         server.watch(before)
         name = os.path.join(server.destination_dir, 'test.txt')
         self.assertTrue(os.path.isfile(name))
+        for f in ['test.txt']:
+            for d in [server.source_dir, server.destination_dir]:
+                name = os.path.join(d, f)
+                try:
+                    os.remove(name)
+                except IOError:
+                    pass
+
+    def test_added_file_with_filter(self):
+        """Asserts an added file is moved to the destination."""
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
+        server = Server(
+            dispatcher=Dispatcher, source_dir=source_dir, destination_dir=destination_dir,
+            exclude_existing_files=True, file_suffix='txt')
+        before = server.before()
+        name_watch = os.path.join(server.source_dir, 'test.txt')
+        open(name_watch, 'w')
+        name_ignore = os.path.join(server.source_dir, 'test.csv')
+        open(name_ignore, 'w')
+        before = server.watch(before)
+        server.watch(before)
+        name_watch = os.path.join(server.destination_dir, 'test.txt')
+        self.assertTrue(os.path.isfile(name_watch))
+        name_ignore = os.path.join(server.destination_dir, 'test.csv')
+        self.assertFalse(os.path.isfile(name_ignore))
+        for f in ['test.txt', 'test.csv']:
+            for d in [server.source_dir, server.destination_dir]:
+                name = os.path.join(d, f)
+                try:
+                    os.remove(name)
+                except IOError:
+                    pass
+
+    def test_file_filter_no_filter(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
+        server = Server(
+            dispatcher=Dispatcher, source_dir=source_dir, destination_dir=destination_dir,
+            exclude_existing_files=True)
+        files = ['test1.txt', 'test2.txt', 'xxxtest3.txt', 'xxxtest3.csv', 'test3.csv']
+        for f in files:
+            name = os.path.join(server.source_dir, f)
+            open(name, 'w')
+        listdir = server.before()
+        listdir = server.filter_by_filetype(listdir)
+        listdir.sort()
+        files.sort()
+        self.assertEquals(files, listdir)
+        for f in files:
+            name = os.path.join(server.source_dir, f)
+            try:
+                os.remove(name)
+            except IOError:
+                pass
+
+    def test_file_filter_prefix_filter(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
+        files = ['test1.txt', 'test2.txt', 'xxxtest3.txt', 'xxxtest3.csv', 'test3.csv']
+        server = Server(
+            dispatcher=Dispatcher, source_dir=source_dir, destination_dir=destination_dir,
+            exclude_existing_files=True,
+            file_prefix='xxx')
+        for f in files:
+            name = os.path.join(server.source_dir, f)
+            open(name, 'w')
+        listdir = server.before()
+        listdir = server.filter_by_filetype(listdir)
+        listdir.sort()
+        self.assertEquals(['xxxtest3.csv', 'xxxtest3.txt'], listdir)
+        for f in files:
+            name = os.path.join(server.source_dir, f)
+            try:
+                os.remove(name)
+            except IOError:
+                pass
+
+    def test_file_filter_suffix_filter(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
+        files = ['test1.txt', 'test2.txt', 'xxxtest3.txt', 'xxxtest3.csv', 'test3.csv']
+        server = Server(
+            dispatcher=Dispatcher, source_dir=source_dir, destination_dir=destination_dir,
+            exclude_existing_files=True,
+            file_suffix='csv')
+        for f in files:
+            name = os.path.join(server.source_dir, f)
+            open(name, 'w')
+        listdir = server.before()
+        listdir = server.filter_by_filetype(listdir)
+        listdir.sort()
+        self.assertEquals(['test3.csv', 'xxxtest3.csv'], listdir)
+        for f in files:
+            name = os.path.join(server.source_dir, f)
+            try:
+                os.remove(name)
+            except IOError:
+                pass
+
+    def test_file_filter_both_filter(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
+        files = ['test1.txt', 'test2.txt', 'xxxtest3.txt', 'xxxtest3.csv', 'test3.csv']
+        server = Server(
+            dispatcher=Dispatcher, source_dir=source_dir, destination_dir=destination_dir,
+            exclude_existing_files=True,
+            file_prefix='xxx', file_suffix='csv')
+        for f in files:
+            name = os.path.join(server.source_dir, f)
+            open(name, 'w')
+        listdir = server.before()
+        listdir = server.filter_by_filetype(listdir)
+        listdir.sort()
+        self.assertEquals(['xxxtest3.csv'], listdir)
+        for f in files:
+            name = os.path.join(server.source_dir, f)
+            try:
+                os.remove(name)
+            except IOError:
+                pass
