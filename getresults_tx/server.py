@@ -34,7 +34,7 @@ class BaseDispatcher(object):
         """Override for your needs.
 
         :param removed: list of file names removed from source_dir
-               and put in the destination_dir
+                        and put in the destination_dir
         """
         pass
 
