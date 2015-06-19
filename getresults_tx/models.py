@@ -30,7 +30,7 @@ class History(models.Model):
         max_length=100)
 
     remote_path = models.CharField(
-        max_length=100)
+        max_length=200)
 
     remote_folder = models.CharField(
         max_length=25,

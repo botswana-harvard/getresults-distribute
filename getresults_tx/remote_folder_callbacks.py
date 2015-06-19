@@ -2,7 +2,7 @@ import os
 from getresults_tx.models import RemoteFolder
 
 
-def select_sub_folder(filename, base_path, remote_folder_func, mkdir_remote):
+def select_sub_folder(instance, filename, base_path):
     """Selects the remote folder based on a 2 digit reference in the filename
     and the base path.
 
@@ -21,27 +21,27 @@ def select_sub_folder(filename, base_path, remote_folder_func, mkdir_remote):
 
     :returns returns remote folder if found otherwise the base_path
     """
+
     folder_hint = filename[4:6]
     try:
         remote_folder = RemoteFolder.objects.get(
             base_path=base_path.split('/')[-1:][0],
             folder_hint=folder_hint
         )
-        path = remote_folder_func(
+        path = instance.remote_folder(
             os.path.join(base_path, remote_folder.folder),
-            mkdir_remote=mkdir_remote)
-    except (RemoteFolder.DoesNotExist, FileNotFoundError) as e:
-        print(str(e))
+            mkdir_remote=instance.mkdir_remote)
+    except (RemoteFolder.DoesNotExist, FileNotFoundError):
         path = base_path
-    return path
+    return path, folder_hint
 
 
-def select_htc_folder(filename, *args):
+def select_htc_folder(instance, filename, base_path):
     """11 characters 12-34-567-89
     YY-COMMUNITY-"""
     folder_hint = filename[3:5]
 
 
-def select_ecc_folder(filename, *args):
+def select_ecc_folder(instance, filename, base_path):
     """8 characters XXX-XXXX"""
     folder_hint = filename[3:5]

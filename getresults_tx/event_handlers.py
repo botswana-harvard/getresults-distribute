@@ -93,12 +93,17 @@ class RemoteFolderEventHandler(BaseEventHandler):
         print('Removed: {}'.format(', '.join(removed)))
 
     def select_destination_dir(self, filename):
-        """Returns the full path of the destination folder."""
+        """Returns the full path of the destination folder.
+
+        Return value can be a list or tuple as long as the first item
+        is the destination_dir."""
         try:
-            return self.custom_select_destination_func(
-                filename, self.destination_dir, self.remote_folder, self.mkdir_remote)
-        except TypeError:
-            return self.destination_dir
+            return self.custom_select_destination_func(filename, self.destination_dir)
+        except TypeError as e:
+            if 'object is not callable' in str(e):
+                return self.destination_dir
+            else:
+                raise
 
     @property
     def destination_subdirs(self):
@@ -126,7 +131,11 @@ class RemoteFolderEventHandler(BaseEventHandler):
         """Copies file to the destination path and
         archives if the archive_dir has been specified."""
 
-        destination_dir = self.select_destination_dir(filename)
+        selection = self.select_destination_dir(filename)
+        if isinstance(selection, (list, tuple)):
+            destination_dir = selection[0]
+        else:
+            destination_dir = selection
         source_filename = os.path.join(self.source_dir, filename)
         destination_filename = os.path.join(destination_dir, filename)
         if not os.path.isfile(source_filename):
@@ -144,7 +153,7 @@ class RemoteFolderEventHandler(BaseEventHandler):
                 )
         except IsADirectoryError:
             fileinfo = None
-        return fileinfo, destination_dir
+        return fileinfo, selection
 
     def statinfo(self, path, filename):
         statinfo = os.stat(os.path.join(self.source_dir, filename))
@@ -155,13 +164,21 @@ class RemoteFolderEventHandler(BaseEventHandler):
             'timestamp': tz.localize(datetime.fromtimestamp(statinfo.st_mtime)),
         }
 
-    def update_history(self, fileinfo, status, destination_dir, mime_type, folder_hint=None):
+    def update_history(self, fileinfo, status, destination_dir, mime_type):
+        try:
+            destination_dir, folder_hint = destination_dir
+        except ValueError:
+            folder_hint = None
+        try:
+            remote_folder = destination_dir.split('/')[-1:][0]
+        except AttributeError:
+            remote_folder = 'default'
         return History.objects.create(
             hostname=socket.gethostname(),
             remote_hostname=self.hostname,
             path=self.source_dir,
             remote_path=self.destination_dir,
-            remote_folder=destination_dir or self.destination_dir,
+            remote_folder=remote_folder,
             remote_folder_hint=folder_hint,
             archive_path=self.archive_dir,
             filename=fileinfo['filename'],

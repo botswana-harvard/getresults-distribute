@@ -130,6 +130,7 @@ class Server(BaseEventHandler):
     def local_folder(self, path, update_permissions=None):
         """Returns the path or raises an Exception if path does not exist."""
         path = os.path.expanduser(path)
+        path = path[:-1] if path.endswith('/') else path
         if not os.path.exists(path):
             if self.mkdir_local:
                 os.makedirs(path)
@@ -143,6 +144,7 @@ class Server(BaseEventHandler):
     def remote_folder(self, path, mkdir_remote=None):
         """Returns the path or raises an Exception if path does not exist on the remote host."""
         path = os.path.expanduser(path)
+        path = path[:-1] if path.endswith('/') else path
         ssh = self.connect()
         with SFTPClient.from_transport(ssh.get_transport()) as sftp:
             try:
