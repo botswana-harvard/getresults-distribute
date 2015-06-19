@@ -11,7 +11,9 @@ import magic
 import os
 import pytz
 import pwd
+import random
 import socket
+import string
 
 from datetime import datetime
 from paramiko import SSHClient
@@ -20,6 +22,7 @@ from scp import SCPClient
 
 from django.conf import settings
 from django.utils import timezone
+from django.core.files import File
 
 from .models import RemoteFolder, TX_SENT, History
 
@@ -86,8 +89,12 @@ class RemoteFolderEventHandler(BaseEventHandler):
                 mime_type = magic.from_file(path, mime=True)
                 fileinfo, destination_dir = self.put(scp, filename)
                 if fileinfo:
-                    os.remove(path)
-                    self.update_history(fileinfo, TX_SENT, destination_dir, mime_type)
+                    if self.archive_dir:
+                        fileinfo['archive_filename'] = self.archive_filename(filename)
+                        self.update_history(fileinfo, TX_SENT, destination_dir, mime_type)
+                        os.rename(path, os.path.join(self.archive_dir, fileinfo['archive_filename']))
+                    else:
+                        os.remove(path)
 
     def on_removed(self, removed):
         print('Removed: {}'.format(', '.join(removed)))
@@ -146,11 +153,6 @@ class RemoteFolderEventHandler(BaseEventHandler):
                 source_filename,
                 destination_filename
             )
-            if self.archive_dir:
-                scp.put(
-                    source_filename,
-                    destination_filename
-                )
         except IsADirectoryError:
             fileinfo = None
         return fileinfo, selection
@@ -173,7 +175,7 @@ class RemoteFolderEventHandler(BaseEventHandler):
             remote_folder = destination_dir.split('/')[-1:][0]
         except AttributeError:
             remote_folder = 'default'
-        return History.objects.create(
+        history = History(
             hostname=socket.gethostname(),
             remote_hostname=self.hostname,
             path=self.source_dir,
@@ -189,3 +191,14 @@ class RemoteFolderEventHandler(BaseEventHandler):
             sent_datetime=timezone.now(),
             user=self.user,
         )
+        if self.archive_dir:
+            history.archive.name = 'archive/{}'.format(fileinfo['archive_filename'])
+        history.save()
+
+    def archive_filename(self, filename):
+        suffix = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(5))
+        try:
+            f, ext = filename.split('.')
+        except ValueError:
+            f, ext = filename, ''
+        return '.'.join(['{}_{}'.format(f, suffix), ext])

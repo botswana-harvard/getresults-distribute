@@ -7,7 +7,12 @@
 # you should have received as part of this distribution.
 #
 
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from django.db import models
+from django.utils import timezone
+
+upload_fs = FileSystemStorage(location=settings.UPLOAD_FOLDER)
 
 TX_SENT = 'sent'
 TX_ACK = 'ack'
@@ -19,6 +24,8 @@ STATUS = (
 
 
 class History(models.Model):
+
+    archive = models.FileField()
 
     hostname = models.CharField(
         max_length=25)
@@ -55,9 +62,6 @@ class History(models.Model):
     mime_type = models.CharField(
         max_length=25)
 
-    subject_identifier = models.CharField(
-        max_length=25)
-
     status = models.CharField(
         max_length=15,
         choices=STATUS)
@@ -65,7 +69,13 @@ class History(models.Model):
     sent_datetime = models.DateTimeField()
 
     ack_datetime = models.DateTimeField(
-        null=True)
+        null=True,
+        blank=True)
+
+    ack_user = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True)
 
     user = models.CharField(
         max_length=50)
@@ -89,3 +99,30 @@ class RemoteFolder(models.Model):
     class Meta:
         app_label = 'getresults_tx'
         unique_together = (('folder', 'base_path'), ('folder', 'folder_hint'))
+
+
+class Upload(models.Model):
+
+    file = models.FileField(upload_to='inbox/')
+
+    upload_datetime = models.DateTimeField(
+        default=timezone.now
+    )
+
+    filename = models.CharField(
+        max_length=25,
+        null=True,
+        blank=True)
+
+    filesize = models.FloatField(
+        null=True,
+        blank=True)
+
+    def save(self, *args, **kwargs):
+        self.filename = self.file.name
+        self.filesize = self.file.size
+        super(Upload, self).save(*args, **kwargs)
+
+    class Meta:
+        app_label = 'getresults_tx'
+        ordering = ('-upload_datetime', )

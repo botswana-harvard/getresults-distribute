@@ -123,3 +123,7 @@ STATICFILES_FINDERS = (
 )
 
 GIT_DIR = BASE_DIR.ancestor(1)
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'testdata/inbox/')
+ARCHIVE_FOLDER = os.path.join(BASE_DIR, 'testdata/archive/')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'testdata/')
+MEDIA_URL = '/media/'
