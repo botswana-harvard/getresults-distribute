@@ -43,5 +43,7 @@ For above, files are collated into sub-folders of the destination folder (*serve
 	
 where *base_path* is *server.destination_dir*. See also *remote_folder.csv* in testdata.
     
-    
-    
+SSH/SCP
+-------
+
+You need to setup key-based authentication first and check that it works between local and remote machines for the current account
