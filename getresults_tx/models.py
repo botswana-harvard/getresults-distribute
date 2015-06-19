@@ -32,6 +32,15 @@ class History(models.Model):
     remote_path = models.CharField(
         max_length=100)
 
+    remote_folder = models.CharField(
+        max_length=25,
+        default='default')
+
+    remote_folder_hint = models.CharField(
+        max_length=10,
+        null=True,
+        help_text='if filename is suggestive of the remote folder ...')
+
     archive_path = models.CharField(
         max_length=100,
         null=True)
@@ -42,6 +51,9 @@ class History(models.Model):
     filesize = models.FloatField()
 
     filetimestamp = models.DateTimeField()
+
+    mime_type = models.CharField(
+        max_length=25)
 
     subject_identifier = models.CharField(
         max_length=25)

@@ -16,9 +16,11 @@ class HistoryAdmin(admin.ModelAdmin):
 
     date_hierarchy = 'sent_datetime'
 
-    list_display = ('filename', 'filesize', 'filetimestamp',
-                    'remote_hostname', 'status', 'sent_datetime', 'ack_datetime')
-    list_filter = ('status', 'sent_datetime', 'ack_datetime')
+    list_display = ('filename', 'filesize', 'filetimestamp', 'mime_type',
+                    'remote_hostname', 'status', 'remote_folder_hint',
+                    'remote_folder',
+                    'sent_datetime', 'ack_datetime')
+    list_filter = ('status', 'sent_datetime', 'ack_datetime', 'remote_folder', 'remote_folder_hint')
     search_fields = ('filename', )
 admin.site.register(History, HistoryAdmin)
 

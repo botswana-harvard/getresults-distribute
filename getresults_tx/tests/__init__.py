@@ -1,1 +1,2 @@
-from .test_dispatcher import TestDispatcher
+from .test_event_handler import TestEventHandler
+from .test_remote_folder_event_handler import TestRemoteFolderEventHandler
