@@ -5,7 +5,7 @@ transfer file based results, e.g. PDFs, to ?
 For example:
 
     source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
-    destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
+    destination_dir = os.path.join(remote_base_dir, 'outbox')
     server = Server(
         event_handler=EventHandler,
         source_dir=source_dir,
