@@ -46,4 +46,4 @@ where *base_path* is *server.destination_dir*. See also *remote_folder.csv* in t
 SSH/SCP
 -------
 
-You need to setup key-based authentication first and check that it works between local and remote machines for the current account
+Files are always transferred using SCP. You need to setup key-based authentication first and check that it works between local and remote machines for the current account. This also applies if the _destination_ folder is on the same host as the _source_ folder.
