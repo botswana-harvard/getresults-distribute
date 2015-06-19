@@ -37,11 +37,13 @@ An example that uses a custom *custom_select_destination_func* function on the h
         mkdir_remote=True)
     server.watch()
 
-For above, files are collated into sub-folders of the destination folder (*server.destination_dir*). The *custom_select_destination_func* parses the file name to lookup the destination sub-folder. The lookup is done against the RemoteFolder model. For example, parse *12* from *066-129999-9.pdf*:
+For above, files are collated into sub-folders of the destination folder (*server.destination_dir*). The *custom_select_destination_func* parses the file name to lookup the destination sub-folder. The lookup is done against the _RemoteFolder_ model. For example, parse *12* from *066-129999-9.pdf*:
 	
 	RemoteFolder.objects.get(base_path=base_path, folder_hint='12') 
 	
-where *base_path* is *destination_dir* as set on *Server()*. See also *remote_folder.csv* in testdata.
+where *base_path* is *server.destination_dir*. See also *remote_folder.csv* in testdata.
     
-    
-    
+SSH/SCP
+-------
+
+Files are always transferred using SCP. You need to setup key-based authentication first and check that it works between local and remote machines for the current account. This also applies if the _destination_ folder is on the same host as the _source_ folder.
