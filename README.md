@@ -15,14 +15,14 @@ For example:
         )
     server.watch()
 
-The server events are *on_added()* and *on_removed()*. *on_added()* is called as new files are added to the source folder.
-*on_removed()* is called as files are removed from the source folder. There may only be one source folder per 
-_Server_ instance.
+The server events are `on_added()` and `on_removed()`. `on_added()` is called as new files are added to the source folder.
+`on_removed()` is called as files are removed from the source folder. There may only be one source folder per 
+`Server` instance.
 
 Event handling can be customized by passing a custom event handler. For example, the event handler 
-_RemoteFolderEventHandler_ sends files to a destination folder on a remote host. By setting a custom
-folder_handler on the event_handler, like _FolderHandler_, files are collated into sub folders of the destination folder
-on the remote host. _FolderHandler_ selects the sub-folder using folder "hints" defined on the folder_handler class. 
+`RemoteFolderEventHandler` sends files to a destination folder on a remote host. By setting a custom
+folder_handler on the event_handler, like `FolderHandler`, files are collated into sub folders of the destination folder
+on the remote host. `FolderHandler` selects the sub-folder using folder "hints" defined on the folder_handler class. 
 
 For example:
 
@@ -46,12 +46,12 @@ For example:
         mkdir_remote=True)
     server.watch()
 
-On a server event, files are collated into sub-folders of the destination folder (*server.destination_dir*).
-The sub-folder name is found by querying the _RemoteFolder_ model using the folder_hint. For example, parse *12* from *066-129999-9.pdf*:
+On a server event, files are collated into sub-folders of the destination folder (`server.destination_dir`).
+The sub-folder name is found by querying the `RemoteFolder` model using the folder_hint. For example, parse *12* from *066-129999-9.pdf*:
 	
 	RemoteFolder.objects.get(base_path=base_path, folder_hint='12') 
 	
-where *base_path* is *server.destination_dir*. See also *remote_folder.csv* in testdata.
+where `base_path` is `server.destination_dir`. See also `remote_folder.csv` in testdata.
     
 SSH/SCP
 -------
