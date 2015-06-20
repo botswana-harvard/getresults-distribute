@@ -40,7 +40,7 @@ class Server(BaseEventHandler):
         :type mkdir_remote: boolean
         """
         super(Server, self).__init__(hostname, timeout)
-        self.event_handler = event_handler(hostname, timeout, **kwargs) or BaseEventHandler(hostname, timeout)
+        self.event_handler = event_handler(hostname, timeout) or BaseEventHandler(hostname, timeout)
         self.hostname = hostname or 'localhost'
         self.port = 22
         self.timeout = timeout or 5.0

@@ -3,7 +3,7 @@ import os
 from django.test.testcases import TestCase
 from django.conf import settings
 
-from ..remote_folder_callbacks import select_folder
+from ..folder_handlers import select_sub_folder_handler
 from ..event_handlers import RemoteFolderEventHandler
 from ..models import RemoteFolder
 from ..server import Server
@@ -110,7 +110,7 @@ class TestRemoteFolderEventHandler(TestCase):
         self.assertEquals(files, destination_files)
         self.remove_temp_files(files, server)
 
-    def test_select_folder_callback_no_remotes(self):
+    def test_folder_handler_no_remotes(self):
         filename = '066-12.txt'
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
@@ -119,10 +119,10 @@ class TestRemoteFolderEventHandler(TestCase):
             source_dir=source_dir,
             destination_dir=destination_dir,
             mkdir_remote=False)
-        path = select_folder(filename, server.destination_dir, server.remote_folder, mkdir_remote=server.mkdir_remote)
+        path = select_sub_folder_handler(filename, server.destination_dir, server.remote_folder, mkdir_remote=server.mkdir_remote)
         self.assertEquals(path, server.destination_dir)
 
-    def test_select_folder_callback_load_remotes(self):
+    def test_folder_handler_load_remotes(self):
         load_remote_folders_from_csv()
         filename = '066-12.txt'
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
@@ -132,10 +132,10 @@ class TestRemoteFolderEventHandler(TestCase):
             source_dir=source_dir,
             destination_dir=destination_dir,
             mkdir_remote=False)
-        path = select_folder(filename, server.destination_dir, server.remote_folder, mkdir_remote=server.mkdir_remote)
+        path = select_sub_folder_handler(filename, server.destination_dir, server.remote_folder, mkdir_remote=server.mkdir_remote)
         self.assertEquals(path, server.destination_dir)
 
-    def test_select_folder_callback_load_remotes_mkdir(self):
+    def test_folder_handler_load_remotes_mkdir(self):
         load_remote_folders_from_csv()
         filename = '066-12.txt'
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
@@ -145,7 +145,7 @@ class TestRemoteFolderEventHandler(TestCase):
             source_dir=source_dir,
             destination_dir=destination_dir,
             mkdir_remote=True)
-        path = select_folder(filename, server.destination_dir, server.remote_folder, mkdir_remote=server.mkdir_remote)
+        path = select_sub_folder_handler(filename, server.destination_dir, server.remote_folder, mkdir_remote=server.mkdir_remote)
         self.assertNotEqual(path, server.destination_dir)
         self.assertEquals(path.split('/')[-1:], ['digawana'])
         try:
@@ -153,7 +153,7 @@ class TestRemoteFolderEventHandler(TestCase):
         except IOError:
             pass
 
-    def test_select_folder_callback_load_remotes_exists(self):
+    def test_folder_handler_load_remotes_exists(self):
         load_remote_folders_from_csv()
         filename = '066-12.txt'
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
@@ -165,7 +165,7 @@ class TestRemoteFolderEventHandler(TestCase):
             source_dir=source_dir,
             destination_dir=destination_dir,
             mkdir_remote=True)
-        path = select_folder(filename, server.destination_dir, server.remote_folder, mkdir_remote=server.mkdir_remote)
+        path = select_sub_folder_handler(filename, server.destination_dir, server.remote_folder, mkdir_remote=server.mkdir_remote)
         self.assertNotEqual(path, server.destination_dir)
         self.assertEquals(path.split('/')[-1:], ['digawana'])
         try:

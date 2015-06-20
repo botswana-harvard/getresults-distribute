@@ -15,17 +15,25 @@ For example:
         )
     server.watch()
 
-An example that uses a custom *custom_select_destination_func* function on the handler:
+The server events are on_added() and on_removed(). on_added() is called as new files are added to the source folder.
+on_removed() is called as files are removed from the source folder. There may only one source folder per 
+_Server_ instance.
+
+The event handler _RemoteFolderEventHandler_ sends files to a remote folder. With the custom folder 
+handler _FolderHandler_ files are collated into sub folders of the destination folder. Collation rules
+are based on the filename. 
+
+An example that uses a custom *FolderHandler* on the event handler:
 
     from getresults_tx.server import Server
     from getresults_tx.event_handlers import RemoteFolderEventHandler
-    from getresults_tx.remote_folder_callbacks import select_sub_folder
+    from getresults_tx.folder_handlers import FolderHandler
     
     source_dir = '~/source/getresults-tx/getresults_tx/testdata/inbox/'
     destination_dir = '~/source/getresults-tx/getresults_tx/testdata/viral_load/'
     archive_dir = '~/source/getresults-tx/getresults_tx/testdata/archive/'
     
-    RemoteFolderEventHandler.custom_select_destination_func=select_sub_folder
+    RemoteFolderEventHandler.folder_handler=FolderHandler()
     
     server = Server(
         RemoteFolderEventHandler,

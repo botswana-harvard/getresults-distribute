@@ -94,7 +94,14 @@ class RemoteFolder(models.Model):
         max_length=100)
 
     folder_hint = models.CharField(
-        max_length=10)
+        max_length=25,
+        default=None,
+        blank=True)
+
+    label = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True)
 
     class Meta:
         app_label = 'getresults_tx'

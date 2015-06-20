@@ -22,9 +22,9 @@ from scp import SCPClient
 
 from django.conf import settings
 from django.utils import timezone
-from django.core.files import File
 
 from .models import RemoteFolder, TX_SENT, History
+from getresults_tx.folder_handlers import BaseFolderHandler
 
 tz = pytz.timezone(settings.TIME_ZONE)
 
@@ -73,10 +73,10 @@ class BaseEventHandler(object):
 
 class RemoteFolderEventHandler(BaseEventHandler):
 
-    custom_select_destination_func = None
+    folder_handler = BaseFolderHandler()
 
-    def __init__(self, hostname, timeout, remote_folder_callback=None):
-        super(RemoteFolderEventHandler, self).__init__(hostname, timeout)
+    def __init__(self, *args):
+        super(RemoteFolderEventHandler, self).__init__(*args)
         self._destination_subdirs = {}
 
     def on_added(self, added):
@@ -87,7 +87,7 @@ class RemoteFolderEventHandler(BaseEventHandler):
             for filename in added:
                 path = os.path.join(self.source_dir, filename)
                 mime_type = magic.from_file(path, mime=True)
-                fileinfo, destination_dir = self.put(scp, filename)
+                fileinfo, destination_dir = self.put(scp, filename, mime_type)
                 if fileinfo:
                     if self.archive_dir:
                         fileinfo['archive_filename'] = self.archive_filename(filename)
@@ -99,13 +99,13 @@ class RemoteFolderEventHandler(BaseEventHandler):
     def on_removed(self, removed):
         print('Removed: {}'.format(', '.join(removed)))
 
-    def select_destination_dir(self, filename):
+    def select_destination_dir(self, filename, mime_type):
         """Returns the full path of the destination folder.
 
         Return value can be a list or tuple as long as the first item
         is the destination_dir."""
         try:
-            return self.custom_select_destination_func(filename, self.destination_dir)
+            return self.folder_handler.select(self, filename, mime_type, self.destination_dir)
         except TypeError as e:
             if 'object is not callable' in str(e):
                 return self.destination_dir
@@ -134,11 +134,11 @@ class RemoteFolderEventHandler(BaseEventHandler):
         except KeyError:
             return self.destination_dir
 
-    def put(self, scp, filename, destination=None):
+    def put(self, scp, filename, mime_type, destination=None):
         """Copies file to the destination path and
         archives if the archive_dir has been specified."""
 
-        selection = self.select_destination_dir(filename)
+        selection = self.select_destination_dir(filename, mime_type)
         if isinstance(selection, (list, tuple)):
             destination_dir = selection[0]
         else:
