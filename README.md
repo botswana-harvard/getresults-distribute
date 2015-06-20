@@ -15,8 +15,8 @@ For example:
         )
     server.watch()
 
-The server events are on_added() and on_removed(). on_added() is called as new files are added to the source folder.
-on_removed() is called as files are removed from the source folder. There may only be one source folder per 
+The server events are *on_added()* and *on_removed()*. *on_added()* is called as new files are added to the source folder.
+*on_removed()* is called as files are removed from the source folder. There may only be one source folder per 
 _Server_ instance.
 
 Event handling can be customized by passing a custom event handler. For example, the event handler 
