@@ -16,14 +16,15 @@ For example:
     server.watch()
 
 The server events are on_added() and on_removed(). on_added() is called as new files are added to the source folder.
-on_removed() is called as files are removed from the source folder. There may only one source folder per 
+on_removed() is called as files are removed from the source folder. There may only be one source folder per 
 _Server_ instance.
 
-The event handler _RemoteFolderEventHandler_ sends files to a remote folder. With the custom folder 
-handler _FolderHandler_ files are collated into sub folders of the destination folder. Collation rules
-are based on the filename. 
+Event handling can be customized by passing a custom event handler. For example, the event handler 
+_RemoteFolderEventHandler_ sends files to a destination folder on a remote host. By setting a custom
+folder_handler on the event_handler, like _FolderHandler_, files are collated into sub folders of the destination folder
+on the remote host. _FolderHandler_ selects the sub-folder using folder "hints" defined on the folder_handler class. 
 
-An example that uses a custom *FolderHandler* on the event handler:
+For example:
 
     from getresults_tx.server import Server
     from getresults_tx.event_handlers import RemoteFolderEventHandler
@@ -45,7 +46,8 @@ An example that uses a custom *FolderHandler* on the event handler:
         mkdir_remote=True)
     server.watch()
 
-For above, files are collated into sub-folders of the destination folder (*server.destination_dir*). The *custom_select_destination_func* parses the file name to lookup the destination sub-folder. The lookup is done against the _RemoteFolder_ model. For example, parse *12* from *066-129999-9.pdf*:
+On a server event, files are collated into sub-folders of the destination folder (*server.destination_dir*).
+The sub-folder name is found by querying the _RemoteFolder_ model using the folder_hint. For example, parse *12* from *066-129999-9.pdf*:
 	
 	RemoteFolder.objects.get(base_path=base_path, folder_hint='12') 
 	
