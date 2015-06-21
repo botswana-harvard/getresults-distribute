@@ -18,10 +18,12 @@ class BaseFolderHandler(object):
 
         :param instance: instance of BaseDispatcher
         :param filename: filename without path.
+        :param mime_type: mime_type as determined by magic.
         :param base_path: base path and in this case server.destination_dir
         :returns returns remote folder if found otherwise the base_path
         """
-        for label, folder_hint in self.folder_hints:
+        remote_folder_path = None
+        for label, folder_hint in self.folder_hints.items():
             try:
                 obj = RemoteFolder.objects.get(
                     base_path=base_path.split('/')[-1:][0],
@@ -65,9 +67,9 @@ class FolderHandler(BaseFolderHandler):
     @property
     def folder_hints(self):
         return {
-            'BHS': self.bhs_folder_hint,
-            'CDC1': self.cdc1_folder_hint,
-            'CDC2': self.cdc2_folder_hint,
+            'bhs': self.bhs_folder_hint,
+            'cdc1': self.cdc1_folder_hint,
+            # 'cdc2': self.cdc2_folder_hint,
         }
 
     def bhs_folder_hint(self, filename, *args):

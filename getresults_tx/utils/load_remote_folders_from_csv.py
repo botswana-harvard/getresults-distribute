@@ -20,5 +20,6 @@ def load_remote_folders_from_csv(csv_filename=None):
                 RemoteFolder.objects.create(
                     base_path=r['base_path'].strip().lower(),
                     folder=r['folder'].strip().lower(),
-                    folder_hint=r['folder_hint'].strip().lower()
+                    folder_hint=r['folder_hint'].strip().lower(),
+                    label=r['label'].strip().lower()
                 )

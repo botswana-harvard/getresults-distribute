@@ -12,6 +12,7 @@ import os
 import time
 
 from paramiko import SFTPClient
+from watchdog.observers import Observer
 
 from .event_handlers import BaseEventHandler
 
@@ -20,7 +21,8 @@ class Server(BaseEventHandler):
 
     def __init__(self, event_handler, hostname=None, timeout=None,
                  source_dir=None, destination_dir=None, archive_dir=None,
-                 file_prefix=None, file_suffix=None, mime_types=None, exclude_existing_files=None,
+                 file_prefix=None, file_suffix=None, mime_types=None,
+                 file_patterns=None, exclude_existing_files=None,
                  mkdir_local=None, mkdir_remote=None, **kwargs):
         """
         :param event_handler: Custom event handler for added and removed files. If omitted the
@@ -50,6 +52,7 @@ class Server(BaseEventHandler):
             self.mime_types = [s.encode() for s in mime_types.split(',')]
         except AttributeError:
             self.mime_types = [b'text/plain']
+        self.file_patterns = file_patterns
         self.mkdir_remote = mkdir_remote
         self.mkdir_local = mkdir_local
         self.exclude_existing_files = exclude_existing_files
@@ -67,65 +70,20 @@ class Server(BaseEventHandler):
         event_handler.archive_dir = self.archive_dir
         event_handler.remote_folder = self.remote_folder
         event_handler.mkdir_remote = self.mkdir_remote
+        event_handler.mime_types = self.mime_types
+        event_handler.patterns = self.file_patterns
         return event_handler
 
-    def watch(self, die=None, sleep=None):
-        """Watches the source_dir for new files and copies them to the destination_dir.
-
-        :param sleep: integer for timer. (Default: 5)
-
-        :param die: if True allows 2 loops then breaks. 2 loops means both
-                    handlers on_added and on_removed will be called. (Default: False)
-        :type die: boolean
-
-        For example:
-            >>> server = Server(
-                    EventHandler,
-                    hostname='localhost',
-                    source_dir=<source_dir>,
-                    destination_dir=<destination_dir>,
-                    file_suffix='txt'
-                    mime_type='application/pdf'
-                )
-            >>> server.watch()
-        """
-        before = self.before()
-        n = 0
-        while n >= 0:
-            time.sleep(sleep or 5)
-            before = self.watch_once(before)
-            if die:
-                n += 1
-                if n == 2:
-                    break
-
-    def watch_once(self, before):
-        """Moves files in source_dir to destination_dir.
-
-        Returns the "after" list which is a list of filenames currently in source_dir.
-
-        Calls on_added and on_removed handlers."""
-        after = []
-        for f in os.listdir(self.source_dir):
-            after.append(f)
-        after = self.filter_by_filetype(after)
-        added = [f for f in after if f not in before]
-        removed = [f for f in before if f not in after]
-        if added:
-            self.event_handler.on_added(added)
-        if removed:
-            self.event_handler.on_removed(removed)
-        return after
-
-    def before(self):
-        """Returns a list of files in the source_dir before the watch loop begins."""
-        before = []
-        if self.exclude_existing_files:
-            for f in os.listdir(self.source_dir):
-                if os.path.isfile(os.path.join(self.source_dir, f)):
-                    before.append(f)
-        before = self.filter_by_filetype(before)
-        return before
+    def observe(self, sleep=None):
+        observer = Observer()
+        observer.schedule(self.event_handler, path=self.source_dir)
+        observer.start()
+        try:
+            while True:
+                time.sleep(sleep or 1)
+        except KeyboardInterrupt:
+            observer.stop()
+        observer.join()
 
     def local_folder(self, path, update_permissions=None):
         """Returns the path or raises an Exception if path does not exist."""
