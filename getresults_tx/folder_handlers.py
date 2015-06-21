@@ -25,9 +25,10 @@ class BaseFolderHandler(object):
         remote_folder_path = None
         for label, folder_hint in self.folder_hints.items():
             try:
+                folder_hint = folder_hint(filename, mime_type)
                 obj = RemoteFolder.objects.get(
                     base_path=base_path.split('/')[-1:][0],
-                    folder_hint=folder_hint(filename, mime_type),
+                    folder_hint=folder_hint,
                     label=label or None,
                 )
                 remote_folder_path = instance.remote_folder(
@@ -37,7 +38,7 @@ class BaseFolderHandler(object):
             except (RemoteFolder.DoesNotExist, FileNotFoundError):
                 pass
         if not remote_folder_path:
-            remote_folder_path = base_path
+            remote_folder_path = None
             label, folder_hint = None, None
         return remote_folder_path, (label, folder_hint)
 

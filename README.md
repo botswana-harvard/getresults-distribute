@@ -27,7 +27,7 @@ on the remote host. `FolderHandler` selects the sub-folder using folder "hints" 
 For example:
 
     from getresults_tx.server import Server
-    from getresults_tx.watchdog_event_handlers import RemoteFolderEventHandler
+    from getresults_tx.event_handlers import RemoteFolderEventHandler
     from getresults_tx.folder_handlers import FolderHandler
     
     source_dir = '~/source/getresults-tx/getresults_tx/testdata/inbox/'
@@ -44,6 +44,7 @@ For example:
         archive_dir=archive_dir,
         mime_types='application/pdf',
         file_patterns=['*.pdf'],
+        touch_existing=True,
         mkdir_remote=True)
     server.observe()
 

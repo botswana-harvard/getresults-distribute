@@ -24,7 +24,7 @@ from watchdog.events import PatternMatchingEventHandler
 from django.conf import settings
 from django.utils import timezone
 
-from .models import RemoteFolder, TX_SENT, History
+from .models import TX_SENT, History
 from getresults_tx.folder_handlers import BaseFolderHandler
 
 tz = pytz.timezone(settings.TIME_ZONE)
@@ -39,12 +39,11 @@ class BaseEventHandler(PatternMatchingEventHandler):
         event.src_path
             path/to/observed/file
     """
-    def __init__(self, hostname, timeout, patterns):
+    def __init__(self, hostname, timeout):
         self.hostname = hostname or 'localhost'
         self.timeout = timeout or 5.0
         self.user = pwd.getpwuid(os.getuid()).pw_name
-        super(BaseEventHandler, self).__init__(
-            patterns=patterns, ignore_directories=True)
+        super(BaseEventHandler, self).__init__(ignore_directories=True)
 
     def process(self, event):
         print('{} {}'.format(event.event_type, event.src_path))
@@ -79,16 +78,16 @@ class BaseEventHandler(PatternMatchingEventHandler):
             raise BadHostKeyException(
                 'Add server to known_hosts on host {}.'
                 ' Got {}.'.format(e, self.hostname))
+        except socket.timeout:
+            print('Cannot connect to host {}.'.format(self.hostname))
+            return None
         return ssh
 
 
 class RemoteFolderEventHandler(BaseEventHandler):
 
     folder_handler = BaseFolderHandler()
-
-    def __init__(self, *args):
-        super(RemoteFolderEventHandler, self).__init__(patterns=['*.*'], *args)
-        self._destination_subdirs = {}
+    patterns = ['*.*']
 
     def on_created(self, event):
         """Move added files to a remote host."""
@@ -105,11 +104,14 @@ class RemoteFolderEventHandler(BaseEventHandler):
         path = os.path.join(self.source_dir, filename)
         mime_type = magic.from_file(path, mime=True)
         if mime_type in self.mime_types or self.mime_types is None:
-            with SCPClient(ssh.get_transport()) as scp:
-                fileinfo, destination_dir = self.put(scp, filename, mime_type)
+            destination_dir, folder_hint = self.select_destination_dir(filename, mime_type)
+            if destination_dir:
+                with SCPClient(ssh.get_transport()) as scp:
+                    fileinfo = self.put(scp, filename, destination_dir)
                 if fileinfo:
                     if self.archive_dir:
                         fileinfo['archive_filename'] = self.archive_filename(filename)
+                        fileinfo['folder_hint'] = folder_hint
                         self.update_history(fileinfo, TX_SENT, destination_dir, mime_type)
                         os.rename(path, os.path.join(self.archive_dir, fileinfo['archive_filename']))
                     else:
@@ -124,41 +126,14 @@ class RemoteFolderEventHandler(BaseEventHandler):
             return self.folder_handler.select(self, filename, mime_type, self.destination_dir)
         except TypeError as e:
             if 'object is not callable' in str(e):
-                return self.destination_dir
+                return self.destination_dir, None, None
             else:
                 raise
 
-    @property
-    def destination_subdirs(self):
-        """Returns a dictionary of subfolders expected to exist in the destination_dir."""
-        if not self._destination_subdirs.get(self.destination_dir):
-            self._destination_subdirs = {self.destination_dir: {}}
-            for remote_folder in RemoteFolder.objects.filter(base_path=self.destination_dir):
-                fldr = self.remote_folder(self.destination_dir, remote_folder.folder)
-                self._remote_subfolders[self.destination_dir].update({
-                    remote_folder.name: fldr,
-                    remote_folder.file_hint: fldr})
-        return self._destination_subdirs
-
-    def destination_subdir(self, key):
-        """Returns the name of a destination_dir subfolder given a key.
-
-        Key can be the folder name or the folder hint. See RemoteFolder model.
-        """
-        try:
-            return self.destination_subdirs[key]
-        except KeyError:
-            return self.destination_dir
-
-    def put(self, scp, filename, mime_type, destination=None):
+    def put(self, scp, filename, destination_dir):
         """Copies file to the destination path and
         archives if the archive_dir has been specified."""
 
-        selection = self.select_destination_dir(filename, mime_type)
-        if isinstance(selection, (list, tuple)):
-            destination_dir = selection[0]
-        else:
-            destination_dir = selection
         source_filename = os.path.join(self.source_dir, filename)
         destination_filename = os.path.join(destination_dir, filename)
         if not os.path.isfile(source_filename):
@@ -171,7 +146,7 @@ class RemoteFolderEventHandler(BaseEventHandler):
             )
         except IsADirectoryError:
             fileinfo = None
-        return fileinfo, selection
+        return fileinfo
 
     def statinfo(self, path, filename):
         statinfo = os.stat(os.path.join(self.source_dir, filename))
@@ -184,10 +159,6 @@ class RemoteFolderEventHandler(BaseEventHandler):
 
     def update_history(self, fileinfo, status, destination_dir, mime_type):
         try:
-            destination_dir, folder_hint = destination_dir
-        except ValueError:
-            folder_hint = None
-        try:
             remote_folder = destination_dir.split('/')[-1:][0]
         except AttributeError:
             remote_folder = 'default'
@@ -197,7 +168,7 @@ class RemoteFolderEventHandler(BaseEventHandler):
             path=self.source_dir,
             remote_path=self.destination_dir,
             remote_folder=remote_folder,
-            remote_folder_hint=folder_hint,
+            remote_folder_hint=fileinfo['folder_hint'],
             archive_path=self.archive_dir,
             filename=fileinfo['filename'],
             filesize=fileinfo['size'],

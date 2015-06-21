@@ -17,25 +17,35 @@ from watchdog.observers import Observer
 from .event_handlers import BaseEventHandler
 
 
+def touch(fname, mode=0o666, dir_fd=None, **kwargs):
+    flags = os.O_CREAT | os.O_APPEND
+    with os.fdopen(os.open(fname, flags=flags, mode=mode, dir_fd=dir_fd)) as f:
+        os.utime(f.fileno() if os.utime in os.supports_fd else fname,
+                 dir_fd=None if os.supports_fd else dir_fd, **kwargs)
+
+
 class Server(BaseEventHandler):
 
     def __init__(self, event_handler, hostname=None, timeout=None,
                  source_dir=None, destination_dir=None, archive_dir=None,
-                 file_prefix=None, file_suffix=None, mime_types=None,
-                 file_patterns=None, exclude_existing_files=None,
+                 mime_types=None, file_patterns=None, file_mode=None, touch_existing=None,
                  mkdir_local=None, mkdir_remote=None, **kwargs):
         """
         :param event_handler: Custom event handler for added and removed files. If omitted the
                               :class:`BaseEventHandler` will be used by default.
 
-        :param file_prefix: used in filtering the files to process. (Default: None)
-        :type file_prefix: str
-
-        :param file_suffix: used in filtering the files to process. (Default: None)
-        :type file_suffix: str
-
         :param mime_type: comma separated list of mime_types. (Default: 'text/plain').
         :type mime_type: str
+
+        :param file_mode: updates existing files to this file mode. Existing files
+                          are files in source_dir before starting the observer. (Default: 644)
+        :type file_mode: integer
+
+        :params file_patterns: a list of patterns, e.g. ['*.pdf']
+        :type file_patterns: list or tuple
+
+        :param touch_existing: if True will `touch` existing files to trigger an event
+        :type touch_existing: boolean
 
         :param mkdir_remote: if True will attempt to create the remote folder or folders.
                              See also model RemoteFolder. (Default: False)
@@ -46,8 +56,6 @@ class Server(BaseEventHandler):
         self.hostname = hostname or 'localhost'
         self.port = 22
         self.timeout = timeout or 5.0
-        self.file_prefix = file_prefix
-        self.file_suffix = file_suffix
         try:
             self.mime_types = [s.encode() for s in mime_types.split(',')]
         except AttributeError:
@@ -55,7 +63,6 @@ class Server(BaseEventHandler):
         self.file_patterns = file_patterns
         self.mkdir_remote = mkdir_remote
         self.mkdir_local = mkdir_local
-        self.exclude_existing_files = exclude_existing_files
         self.source_dir = self.local_folder(source_dir, update_permissions=True)
         self.destination_dir = self.remote_folder(destination_dir)
         if archive_dir:
@@ -63,6 +70,9 @@ class Server(BaseEventHandler):
         else:
             self.archive_dir = None
         event_handler = self._wrapper(event_handler)
+        self.touch_existing = touch_existing
+        if touch_existing:
+            self.update_file_mode(file_mode)
 
     def _wrapper(self, event_handler):
         event_handler.source_dir = self.source_dir
@@ -78,12 +88,26 @@ class Server(BaseEventHandler):
         observer = Observer()
         observer.schedule(self.event_handler, path=self.source_dir)
         observer.start()
+        if self.touch_existing:
+            self.touch_files()
+
         try:
             while True:
                 time.sleep(sleep or 1)
         except KeyboardInterrupt:
             observer.stop()
         observer.join()
+
+    def touch_files(self):
+        for filename in self.filtered_listdir(os.listdir(self.source_dir), self.source_dir):
+            touch(os.path.join(self.source_dir, filename))
+
+    def update_file_mode(self, mode):
+        """Updates file mode of and touches existing files ."""
+        mode = mode or 0o644
+        for filename in self.filtered_listdir(os.listdir(self.source_dir), self.source_dir):
+            if mode:
+                os.chmod(os.path.join(self.source_dir, filename), mode)
 
     def local_folder(self, path, update_permissions=None):
         """Returns the path or raises an Exception if path does not exist."""
@@ -94,9 +118,6 @@ class Server(BaseEventHandler):
                 os.makedirs(path)
             else:
                 raise FileNotFoundError(path)
-        if update_permissions:
-            for filename in self.filter_by_filetype(os.listdir(path), path):
-                os.chmod(os.path.join(path, filename), 0o777)
         return path
 
     def remote_folder(self, path, mkdir_remote=None):
@@ -104,24 +125,25 @@ class Server(BaseEventHandler):
         path = os.path.expanduser(path)
         path = path[:-1] if path.endswith('/') else path
         ssh = self.connect()
-        with SFTPClient.from_transport(ssh.get_transport()) as sftp:
-            try:
-                sftp.chdir(path)
-            except IOError:
-                if mkdir_remote or self.mkdir_remote:
-                    self.mkdir_p(sftp, path)
-                else:
-                    raise FileNotFoundError('{} not found on remote host.'.format(path))
-        return path
+        if ssh:
+            with SFTPClient.from_transport(ssh.get_transport()) as sftp:
+                try:
+                    sftp.chdir(path)
+                except IOError:
+                    if mkdir_remote or self.mkdir_remote:
+                        self.mkdir_p(sftp, path)
+                    else:
+                        raise FileNotFoundError('{} not found on remote host.'.format(path))
+            return path
+        return None
 
-    def filter_by_filetype(self, listdir, basedir=None):
-        """Returns listdir as is or filtered by prefix and/or suffix and mime_type."""
+    def filtered_listdir(self, listdir, basedir=None):
+        """Returns listdir as is or filtered by patterns and mime_type."""
         basedir = basedir or self.source_dir
         lst = []
         for f in listdir:
             if (magic.from_file(os.path.join(basedir, f), mime=True) in self.mime_types and
-                    f.startswith(self.file_prefix or '') and
-                    f.endswith(self.file_suffix or '')):
+                    [pat for pat in self.file_patterns if f.endswith(pat.split('*')[1])]):
                 lst.append(f)
         return lst
 
