@@ -115,7 +115,7 @@ class RemoteFolder(models.Model):
 
 class Upload(models.Model):
 
-    file = models.FileField(upload_to='inbox/')
+    file = models.FileField(upload_to=settings.GRTX_UPLOAD_FOLDER)
 
     upload_datetime = models.DateTimeField(
         default=timezone.now

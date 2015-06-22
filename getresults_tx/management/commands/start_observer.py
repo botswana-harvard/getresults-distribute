@@ -7,6 +7,7 @@
 # you should have received as part of this distribution.
 #
 
+import os
 import sys
 
 from django.conf import settings
@@ -21,9 +22,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         hostname = settings.GRTX_REMOTE_HOSTNAME
-        source_dir = settings.GRTX_UPLOAD_FOLDER
+        source_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_UPLOAD_FOLDER)
         destination_dir = settings.GRTX_REMOTE_FOLDER
-        archive_dir = settings.GRTX_ARCHIVE_FOLDER
+        archive_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_ARCHIVE_FOLDER)
         file_patterns = settings.GRTX_FILE_PATTERNS
         mime_types = settings.GRTX_MIME_TYPES
         server = Server(

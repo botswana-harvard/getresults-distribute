@@ -150,8 +150,8 @@ MEDIA_URL = '/media/'
 
 # local folders are relative to MEDIA_ROOT
 GRTX_REMOTE_HOSTNAME = 'localhost'
-GRTX_UPLOAD_FOLDER = os.path.join(MEDIA_ROOT, 'inbox/')
+GRTX_UPLOAD_FOLDER = 'inbox/'
 GRTX_REMOTE_FOLDER = '~/viral_load'
-GRTX_ARCHIVE_FOLDER = os.path.join(MEDIA_ROOT, 'archive/')
+GRTX_ARCHIVE_FOLDER = 'archive/'
 GRTX_FILE_PATTERNS = ['*.pdf']
 GRTX_MIME_TYPES = ['application/pdf']
