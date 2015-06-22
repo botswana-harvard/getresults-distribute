@@ -47,10 +47,10 @@ For example:
     server.observe()
 
 
-On a server event, files are collated into sub-folders of the destination folder (`server.destination_dir`).
-The sub-folder name is found by querying the `RemoteFolder` model using the folder_hint. For example, parse *12* from *066-129999-9.pdf*:
+On a server `observe` event, files are collated into sub-folders of the destination folder (`server.destination_dir`).
+The sub-folder name is found by querying the `RemoteFolder` model using the folder_hint that matches the regular expression. For example, `re.match`es filename *066-129999-9.pdf* and then parses *12* as the folder hint.:
 	
-	RemoteFolder.objects.get(base_path=base_path, folder_hint='12') 
+	RemoteFolder.objects.get(base_path=base_path, folder_hint='12', label='bhs') 
 	
 where `base_path` is `server.destination_dir`. See also `remote_folder.csv` in testdata.
     
