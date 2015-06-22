@@ -102,8 +102,14 @@ class RemoteFolderEventHandler(BaseEventHandler):
     def on_created(self, event):
         self.process_added(event)
 
-#     def on_modified(self, event):
-#         self.process_added(event)
+    def on_modified(self, event):
+        try:
+            self.process_added(event)
+        except OSError as e:
+            if ' File does not exist' in str(e):
+                pass
+            else:
+                raise
 
     def process_added(self, event):
         print('{} {}'.format(event.event_type, event.src_path))
