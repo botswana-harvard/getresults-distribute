@@ -103,20 +103,20 @@ class RemoteFolderEventHandler(BaseEventHandler):
         self.process_added(event)
 
     def on_modified(self, event):
-        try:
-            self.process_added(event)
-        except OSError as e:
-            if ' File does not exist' in str(e):
-                pass
-            else:
-                raise
+        self.process_added(event)
 
     def process_added(self, event):
         print('{} {}'.format(event.event_type, event.src_path))
         ssh = self.connect()
         filename = event.src_path.split('/')[-1:][0]
         path = os.path.join(self.source_dir, filename)
-        mime_type = magic.from_file(path, mime=True)
+        try:
+            mime_type = magic.from_file(path, mime=True)
+        except (OSError, IOError) as e:
+            if ' File does not exist' in str(e):
+                pass
+            else:
+                raise
         if mime_type in self.mime_types:
             folder_selection = self.select_destination_dir(filename, mime_type)
             if not folder_selection.path:
