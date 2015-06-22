@@ -39,10 +39,13 @@ class BaseEventHandler(PatternMatchingEventHandler):
         event.src_path
             path/to/observed/file
     """
-    def __init__(self, hostname, timeout):
+    def __init__(self, hostname, timeout, remote_user=None):
         self.hostname = hostname or 'localhost'
         self.timeout = timeout or 5.0
-        self.user = pwd.getpwuid(os.getuid()).pw_name
+        try:
+            self.remote_user = remote_user or settings.REMOTE_USERNAME
+        except AttributeError:
+            self.remote_user = pwd.getpwuid(os.getuid()).pw_name
         super(BaseEventHandler, self).__init__(ignore_directories=True)
 
     def process(self, event):
@@ -65,13 +68,15 @@ class BaseEventHandler(PatternMatchingEventHandler):
         try:
             ssh.connect(
                 self.hostname,
-                timeout=self.timeout
+                timeout=self.timeout,
+                username=self.remote_user
             )
         except SSHException:
             ssh.set_missing_host_key_policy(AutoAddPolicy())
             ssh.connect(
                 self.hostname,
-                timeout=self.timeout
+                timeout=self.timeout,
+                username=self.remote_user
             )
 
     def connect(self):
@@ -83,7 +88,7 @@ class BaseEventHandler(PatternMatchingEventHandler):
         except AuthenticationException as e:
             raise AuthenticationException(
                 'Got {}. Add user {} to authorized_keys on host {}'.format(
-                    e, self.user, self.hostname))
+                    e, self.remote_user, self.hostname))
         except BadHostKeyException as e:
             raise BadHostKeyException(
                 'Add server to known_hosts on host {}.'
@@ -182,7 +187,7 @@ class RemoteFolderEventHandler(BaseEventHandler):
             mime_type=mime_type,
             status=status,
             sent_datetime=timezone.now(),
-            user=self.user,
+            user=self.remote_user,
         )
         if self.archive_dir:
             history.archive.name = 'archive/{}'.format(fileinfo['archive_filename'])

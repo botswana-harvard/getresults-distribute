@@ -12,7 +12,7 @@ class FolderSelection(object):
 
     def __init__(self, name, path, hint, label):
         self.name = name
-        self.path = path
+        self.path = os.path.expanduser(path)
         self.hint = hint
         self.label = label
 

@@ -20,7 +20,9 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+import pwd
 import os
+
 from unipath import Path
 
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -150,6 +152,7 @@ MEDIA_URL = '/media/'
 
 # local folders are relative to MEDIA_ROOT
 GRTX_REMOTE_HOSTNAME = 'localhost'
+GRTX_REMOTE_USERNAME = pwd.getpwuid(os.getuid()).pw_name
 GRTX_UPLOAD_FOLDER = 'inbox/'
 GRTX_REMOTE_FOLDER = '~/viral_load'
 GRTX_ARCHIVE_FOLDER = 'archive/'

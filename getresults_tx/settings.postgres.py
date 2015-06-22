@@ -145,11 +145,12 @@ STATICFILES_FINDERS = (
 )
 
 GIT_DIR = BASE_DIR.ancestor(1)
-MEDIA_ROOT = '~/getresults_files/'
+MEDIA_ROOT = os.path.expanduser('~/getresults_files/')
 MEDIA_URL = '/media/'
 
 # local folders are relative to MEDIA_ROOT
-GRTX_REMOTE_HOSTNAME = 'localhost'
+GRTX_REMOTE_HOSTNAME = '192.168.1.216'
+GRTX_REMOTE_USERNAME = 'erikvw'
 GRTX_UPLOAD_FOLDER = 'upload/'
 GRTX_REMOTE_FOLDER = '~/viral_load'
 GRTX_ARCHIVE_FOLDER = 'archive/'
