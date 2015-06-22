@@ -25,7 +25,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from .models import TX_SENT, History
-from getresults_tx.folder_handlers import BaseFolderHandler
+from getresults_tx.folder_handlers import FolderHandler
 
 tz = pytz.timezone(settings.TIME_ZONE)
 
@@ -96,7 +96,7 @@ class BaseEventHandler(PatternMatchingEventHandler):
 
 class RemoteFolderEventHandler(BaseEventHandler):
 
-    folder_handler = BaseFolderHandler()
+    folder_handler = FolderHandler()
     patterns = ['*.*']
 
     def on_created(self, event):

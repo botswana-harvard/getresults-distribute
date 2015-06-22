@@ -94,6 +94,28 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'gr',
+#         'USER': 'postgres',
+#         'PASSWORD': 'postgres',
+#         'HOST': 'localhost',
+#         'PORT': '',
+#     }
+# }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'gr',
+#         'USER': 'root',
+#         # 'PASSWORD': '',
+#         'HOST': '',
+#         'PORT': '',
+#     }
+# }
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -123,7 +145,13 @@ STATICFILES_FINDERS = (
 )
 
 GIT_DIR = BASE_DIR.ancestor(1)
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'testdata/inbox/')
-ARCHIVE_FOLDER = os.path.join(BASE_DIR, 'testdata/archive/')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'testdata/')
 MEDIA_URL = '/media/'
+
+# local folders are relative to MEDIA_ROOT
+GRTX_REMOTE_HOSTNAME = 'localhost'
+GRTX_UPLOAD_FOLDER = os.path.join(MEDIA_ROOT, 'inbox/')
+GRTX_REMOTE_FOLDER = '~/viral_load'
+GRTX_ARCHIVE_FOLDER = os.path.join(MEDIA_ROOT, 'archive/')
+GRTX_FILE_PATTERNS = ['*.pdf']
+GRTX_MIME_TYPES = ['application/pdf']

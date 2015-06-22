@@ -6,13 +6,17 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 #
+import magic
+import os
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
-upload_fs = FileSystemStorage(location=settings.UPLOAD_FOLDER)
+upload_fs = FileSystemStorage(location=settings.GRTX_UPLOAD_FOLDER)
 
 TX_SENT = 'sent'
 TX_ACK = 'ack'
@@ -106,6 +110,7 @@ class RemoteFolder(models.Model):
     class Meta:
         app_label = 'getresults_tx'
         unique_together = (('folder', 'base_path'), ('folder', 'folder_hint'))
+        ordering = ('label', 'base_path', 'folder')
 
 
 class Upload(models.Model):
@@ -125,6 +130,11 @@ class Upload(models.Model):
         null=True,
         blank=True)
 
+    mime_type = models.CharField(
+        max_length=25,
+        null=True,
+        blank=True)
+
     def save(self, *args, **kwargs):
         self.filename = self.file.name
         self.filesize = self.file.size
@@ -133,3 +143,12 @@ class Upload(models.Model):
     class Meta:
         app_label = 'getresults_tx'
         ordering = ('-upload_datetime', )
+
+
+# @receiver(post_save, weak=False, dispatch_uid="enrollment_checklist_on_post_save")
+# def update_mime_type_post_save(sender, instance, raw, created, using, **kwargs):
+#     if not raw:
+#         if isinstance(instance, Upload):
+#             f = instance.file.open()
+#             instance.mime_type = magic.from_file(f, mime=True)
+#             f.close()

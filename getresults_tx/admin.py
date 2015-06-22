@@ -16,21 +16,22 @@ class HistoryAdmin(admin.ModelAdmin):
 
     date_hierarchy = 'sent_datetime'
 
-    list_display = ('filename', 'archive', 'filesize', 'filetimestamp', 'mime_type',
+    list_display = ('filename', 'archive', 'filesize', 'filetimestamp',
+                    'sent_datetime', 'ack_datetime', 'mime_type',
                     'remote_hostname', 'status', 'remote_folder_hint',
-                    'remote_folder',
-                    'sent_datetime', 'ack_datetime')
+                    'remote_folder')
     list_filter = ('status', 'sent_datetime', 'ack_datetime', 'remote_folder', 'remote_folder_hint')
     search_fields = ('filename', )
 admin.site.register(History, HistoryAdmin)
 
 
 class RemoteFolderAdmin(admin.ModelAdmin):
-    list_display = ('folder', 'folder_hint', 'base_path')
+    list_display = ('folder', 'label', 'folder_hint', 'base_path')
+    list_filter = ('label', 'base_path')
 admin.site.register(RemoteFolder, RemoteFolderAdmin)
 
 
 class UploadAdmin(admin.ModelAdmin):
-    list_display = ('filename', 'upload_datetime', 'filesize')
+    list_display = ('filename', 'upload_datetime', 'filesize', 'mime_type')
     search_fields = ('file', 'description')
 admin.site.register(Upload, UploadAdmin)

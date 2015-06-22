@@ -59,7 +59,8 @@ class BaseFolderHandler(object):
             remote_folder_name = None
             remote_folder_path = None
             label, folder_hint = None, None
-        return FolderSelection(remote_folder_name, remote_folder_path, folder_hint, label)
+        folder_selection = FolderSelection(remote_folder_name, remote_folder_path, folder_hint, label)
+        return folder_selection
 
     @property
     def folder_hints(self):

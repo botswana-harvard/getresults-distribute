@@ -11,6 +11,7 @@ import magic
 import os
 import time
 
+from django.utils import timezone
 from paramiko import SFTPClient
 from watchdog.observers import Observer
 
@@ -80,6 +81,9 @@ class Server(BaseEventHandler):
         self.touch_existing = touch_existing
         if touch_existing:
             self.update_file_mode(file_mode)
+
+    def __str__(self):
+        return 'Server started on {}'.format(timezone.now())
 
     def _wrapper(self, event_handler):
         event_handler.source_dir = self.source_dir
