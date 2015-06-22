@@ -15,7 +15,7 @@ For example:
         )
     server.watch()
 
-The server events are the `watchdog` events, namely; `on_created()`, `on_modifier()`, `on_moved` and `on_deleted().
+The server events are the `watchdog` events, namely; `on_created()`, `on_modifier()`, `on_moved()` and `on_deleted()`.
 
 Event handling can be customized by passing a custom event handler. For example, the event handler 
 `RemoteFolderEventHandler` sends files to a destination folder on a remote host. By setting a custom
