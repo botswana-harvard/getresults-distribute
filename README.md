@@ -15,9 +15,7 @@ For example:
         )
     server.watch()
 
-The server events are `on_added()` and `on_removed()`. `on_added()` is called as new files are added to the source folder.
-`on_removed()` is called as files are removed from the source folder. There may only be one source folder per 
-`Server` instance.
+The server events are the `watchdog` events, namely; `on_created()`, `on_modifier()`, `on_moved` and `on_deleted().
 
 Event handling can be customized by passing a custom event handler. For example, the event handler 
 `RemoteFolderEventHandler` sends files to a destination folder on a remote host. By setting a custom
