@@ -16,8 +16,8 @@ import socket
 import string
 
 from datetime import datetime
-from paramiko import SSHClient
-from paramiko.ssh_exception import BadHostKeyException, AuthenticationException
+from paramiko import SSHClient, AutoAddPolicy
+from paramiko.ssh_exception import BadHostKeyException, AuthenticationException, SSHException
 from scp import SCPClient
 from watchdog.events import PatternMatchingEventHandler
 
@@ -61,15 +61,25 @@ class BaseEventHandler(PatternMatchingEventHandler):
     def on_moved(self, event):
         self.process(event)
 
-    def connect(self):
-        """Returns an ssh instance."""
-        ssh = SSHClient()
-        ssh.load_system_host_keys()
+    def _connect(self, ssh):
         try:
             ssh.connect(
                 self.hostname,
                 timeout=self.timeout
             )
+        except SSHException:
+            ssh.set_missing_host_key_policy(AutoAddPolicy())
+            ssh.connect(
+                self.hostname,
+                timeout=self.timeout
+            )
+
+    def connect(self):
+        """Returns an ssh instance."""
+        ssh = SSHClient()
+        ssh.load_system_host_keys()
+        try:
+            self._connect(ssh)
         except AuthenticationException as e:
             raise AuthenticationException(
                 'Got {}. Add user {} to authorized_keys on host {}'.format(
