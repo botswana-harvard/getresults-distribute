@@ -40,7 +40,7 @@ For example:
         source_dir=source_dir,
         destination_dir=destination_dir,
         archive_dir=archive_dir,
-        mime_types='application/pdf',
+        mime_types=['application/pdf'],
         file_patterns=['*.pdf'],
         touch_existing=True,
         mkdir_remote=True)

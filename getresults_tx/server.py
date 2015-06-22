@@ -24,6 +24,10 @@ def touch(fname, mode=0o666, dir_fd=None, **kwargs):
                  dir_fd=None if os.supports_fd else dir_fd, **kwargs)
 
 
+class ServerError(Exception):
+    pass
+
+
 class Server(BaseEventHandler):
 
     def __init__(self, event_handler, hostname=None, timeout=None,
@@ -57,10 +61,13 @@ class Server(BaseEventHandler):
         self.port = 22
         self.timeout = timeout or 5.0
         try:
-            self.mime_types = [s.encode() for s in mime_types.split(',')]
-        except AttributeError:
-            self.mime_types = [b'text/plain']
-        self.file_patterns = file_patterns
+            self.mime_types = [s.encode() for s in mime_types]
+        except TypeError:
+            raise ServerError('No mime_types defined. Nothing to do. Got {}'.format(mime_types))
+        try:
+            self.file_patterns = [str(s) for s in file_patterns]
+        except TypeError:
+            raise ServerError('No patterns defined. Nothing to do. Got {}'.format(file_patterns))
         self.mkdir_remote = mkdir_remote
         self.mkdir_local = mkdir_local
         self.source_dir = self.local_folder(source_dir, update_permissions=True)

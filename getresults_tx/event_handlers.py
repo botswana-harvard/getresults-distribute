@@ -103,16 +103,17 @@ class RemoteFolderEventHandler(BaseEventHandler):
         filename = event.src_path.split('/')[-1:][0]
         path = os.path.join(self.source_dir, filename)
         mime_type = magic.from_file(path, mime=True)
-        if mime_type in self.mime_types or self.mime_types is None:
-            destination_dir, folder_hint = self.select_destination_dir(filename, mime_type)
-            if destination_dir:
+        if mime_type in self.mime_types:
+            folder_selection = self.select_destination_dir(filename, mime_type)
+            if not folder_selection.path:
+                return None
+            else:
                 with SCPClient(ssh.get_transport()) as scp:
-                    fileinfo = self.put(scp, filename, destination_dir)
+                    fileinfo = self.put(scp, filename, folder_selection.path)
                 if fileinfo:
                     if self.archive_dir:
                         fileinfo['archive_filename'] = self.archive_filename(filename)
-                        fileinfo['folder_hint'] = folder_hint
-                        self.update_history(fileinfo, TX_SENT, destination_dir, mime_type)
+                        self.update_history(fileinfo, TX_SENT, folder_selection, mime_type)
                         os.rename(path, os.path.join(self.archive_dir, fileinfo['archive_filename']))
                     else:
                         os.remove(path)
@@ -157,18 +158,14 @@ class RemoteFolderEventHandler(BaseEventHandler):
             'timestamp': tz.localize(datetime.fromtimestamp(statinfo.st_mtime)),
         }
 
-    def update_history(self, fileinfo, status, destination_dir, mime_type):
-        try:
-            remote_folder = destination_dir.split('/')[-1:][0]
-        except AttributeError:
-            remote_folder = 'default'
+    def update_history(self, fileinfo, status, folder_selection, mime_type):
         history = History(
             hostname=socket.gethostname(),
             remote_hostname=self.hostname,
             path=self.source_dir,
-            remote_path=self.destination_dir,
-            remote_folder=remote_folder,
-            remote_folder_hint=fileinfo['folder_hint'],
+            remote_path=folder_selection.path,
+            remote_folder=folder_selection.name,
+            remote_folder_hint=folder_selection.hint,
             archive_path=self.archive_dir,
             filename=fileinfo['filename'],
             filesize=fileinfo['size'],
