@@ -100,12 +100,10 @@ class RemoteFolderEventHandler(BaseEventHandler):
     patterns = ['*.*']
 
     def on_created(self, event):
-        """Move added files to a remote host."""
         self.process_added(event)
 
-    def on_modified(self, event):
-        """Move added files to a remote host."""
-        self.process_added(event)
+#     def on_modified(self, event):
+#         self.process_added(event)
 
     def process_added(self, event):
         print('{} {}'.format(event.event_type, event.src_path))
