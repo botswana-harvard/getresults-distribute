@@ -114,7 +114,10 @@ class RemoteFolder(models.Model):
 
 class Upload(models.Model):
 
-    file = models.FileField(upload_to=settings.GRTX_UPLOAD_FOLDER)
+    file = models.FileField(
+        upload_to=settings.GRTX_UPLOAD_FOLDER,
+        null=True,
+        blank=True)
 
     upload_datetime = models.DateTimeField(
         default=timezone.now
@@ -169,8 +172,9 @@ class Upload(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        self.filename = self.file.name
-        self.filesize = self.file.size
+        if self.file:
+            self.filename = self.file.name
+            self.filesize = self.file.size
         super(Upload, self).save(*args, **kwargs)
 
     class Meta:

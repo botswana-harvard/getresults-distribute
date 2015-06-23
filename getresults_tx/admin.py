@@ -23,6 +23,7 @@ class HistoryAdmin(admin.ModelAdmin):
                     'remote_folder')
     list_filter = ('status', 'sent_datetime', 'ack_datetime', 'remote_folder', 'remote_folder_hint')
     search_fields = ('filename', )
+    actions = [update_pending_files, ]
 admin.site.register(History, HistoryAdmin)
 
 

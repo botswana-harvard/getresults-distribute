@@ -12,20 +12,24 @@ from .models import History, Pending
 tz = pytz.timezone(settings.TIME_ZONE)
 
 
-def update_on_sent_action(modeladmin, request, queryset):
-    for obj in queryset:
+def update_on_sent_action(modeladmin, request, uploads):
+    for upload in uploads:
         try:
-            history = History.objects.get(filename=obj.filename)
-            obj.sent = True
-            obj.sent_datetime = history.sent_datetime
+            history = History.objects.get(filename=upload.filename)
+            upload.sent = True
+            upload.sent_datetime = history.sent_datetime
         except MultipleObjectsReturned:
-            history = History.objects.filter(filename=obj.filename).order_by('sent_datetime')
-            obj.sent = True
-            obj.sent_datetime = history[0].sent_datetime
+            history = History.objects.filter(filename=upload.filename).order_by('sent_datetime')
+            upload.sent = True
+            upload.sent_datetime = history[0].sent_datetime
         except History.DoesNotExist:
-            obj.sent = False
-            obj.sent_datetime = None
-        obj.save()
+            upload.sent = False
+            upload.sent_datetime = None
+        try:
+            upload.save()
+        except FileNotFoundError:
+            upload.file = None
+            upload.save()
 update_on_sent_action.short_description = "Check sent history"
 
 
@@ -49,7 +53,7 @@ upload_unaudit_action.short_description = "Undo audit (flag uploads as not audit
 
 
 def update_pending_files(modeladmin, request, queryset):
-    upload_path = os.path.join(settings.MEDIA_ROOT, settings.GRTX_UPLOAD_FOLDER)
+    upload_path = os.path.join(settings.MEDIA_ROOT, settings.GRTX_ARCHIVE_FOLDER)
     Pending.objects.all().delete()
     for filename in os.listdir(upload_path):
         fileinfo = os.stat(os.path.join(upload_path, filename))
