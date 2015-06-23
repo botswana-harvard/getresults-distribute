@@ -53,7 +53,7 @@ upload_unaudit_action.short_description = "Undo audit (flag uploads as not audit
 
 
 def update_pending_files(modeladmin, request, queryset):
-    upload_path = os.path.join(settings.MEDIA_ROOT, settings.GRTX_ARCHIVE_FOLDER)
+    upload_path = os.path.join(settings.MEDIA_ROOT, settings.GRTX_UPLOAD_FOLDER)
     Pending.objects.all().delete()
     for filename in os.listdir(upload_path):
         fileinfo = os.stat(os.path.join(upload_path, filename))
