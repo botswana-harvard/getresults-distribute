@@ -147,14 +147,17 @@ STATICFILES_FINDERS = (
 )
 
 GIT_DIR = BASE_DIR.ancestor(1)
-MEDIA_ROOT = os.path.join(BASE_DIR, 'testdata/')
+
+MEDIA_ROOT = os.path.expanduser('~/getresults_files/')
 MEDIA_URL = '/media/'
 
-# local folders are relative to MEDIA_ROOT
-GRTX_REMOTE_HOSTNAME = 'localhost'
-GRTX_REMOTE_USERNAME = pwd.getpwuid(os.getuid()).pw_name
-GRTX_UPLOAD_FOLDER = 'inbox/'
+# remote folders
+GRTX_REMOTE_HOSTNAME = '192.168.1.216'
+GRTX_REMOTE_USERNAME = 'erikvw'
 GRTX_REMOTE_FOLDER = '~/viral_load'
+
+# local folders are relative to MEDIA_ROOT
+GRTX_UPLOAD_FOLDER = 'upload/'
 GRTX_ARCHIVE_FOLDER = 'archive/'
 GRTX_FILE_PATTERNS = ['*.pdf']
 GRTX_MIME_TYPES = ['application/pdf']

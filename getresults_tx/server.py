@@ -31,7 +31,7 @@ class ServerError(Exception):
 
 class Server(BaseEventHandler):
 
-    def __init__(self, event_handler, hostname=None, timeout=None,
+    def __init__(self, event_handler, hostname=None, timeout=None, remote_user=None,
                  source_dir=None, destination_dir=None, archive_dir=None,
                  mime_types=None, file_patterns=None, file_mode=None, touch_existing=None,
                  mkdir_local=None, mkdir_remote=None, **kwargs):
@@ -56,8 +56,9 @@ class Server(BaseEventHandler):
                              See also model RemoteFolder. (Default: False)
         :type mkdir_remote: boolean
         """
-        super(Server, self).__init__(hostname, timeout)
-        self.event_handler = event_handler(hostname, timeout) or BaseEventHandler(hostname, timeout)
+        super(Server, self).__init__(hostname, timeout, remote_user)
+        self.event_handler = event_handler(
+            hostname, timeout, remote_user) or BaseEventHandler(hostname, timeout, remote_user)
         self.hostname = hostname or 'localhost'
         self.port = 22
         self.timeout = timeout or 5.0
@@ -133,10 +134,11 @@ class Server(BaseEventHandler):
 
     def remote_folder(self, path, mkdir_remote=None):
         """Returns the path or raises an Exception if path does not exist on the remote host."""
-        path = os.path.expanduser(path)
-        path = path[:-1] if path.endswith('/') else path
         ssh = self.connect()
         if ssh:
+            if path[0:1] == b'~' or path[0:1] == '~':
+                _, stdout, _ = ssh.exec_command("pwd")
+                path = os.path.join(stdout.readlines()[0].strip(), path.replace('~/', ''))
             with SFTPClient.from_transport(ssh.get_transport()) as sftp:
                 try:
                     sftp.chdir(path)

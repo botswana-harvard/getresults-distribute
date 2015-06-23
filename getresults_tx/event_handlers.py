@@ -24,8 +24,8 @@ from watchdog.events import PatternMatchingEventHandler
 from django.conf import settings
 from django.utils import timezone
 
+from .folder_handlers import FolderHandler
 from .models import TX_SENT, History
-from getresults_tx.folder_handlers import FolderHandler
 
 tz = pytz.timezone(settings.TIME_ZONE)
 
@@ -43,7 +43,7 @@ class BaseEventHandler(PatternMatchingEventHandler):
         self.hostname = hostname or 'localhost'
         self.timeout = timeout or 5.0
         try:
-            self.remote_user = remote_user or settings.REMOTE_USERNAME
+            self.remote_user = remote_user or settings.GRTX_REMOTE_USERNAME
         except AttributeError:
             self.remote_user = pwd.getpwuid(os.getuid()).pw_name
         super(BaseEventHandler, self).__init__(ignore_directories=True)
@@ -68,27 +68,28 @@ class BaseEventHandler(PatternMatchingEventHandler):
         try:
             ssh.connect(
                 self.hostname,
+                username=self.remote_user,
                 timeout=self.timeout,
-                username=self.remote_user
             )
         except SSHException:
             ssh.set_missing_host_key_policy(AutoAddPolicy())
             ssh.connect(
                 self.hostname,
+                username=self.remote_user,
                 timeout=self.timeout,
-                username=self.remote_user
             )
+        return ssh
 
     def connect(self):
-        """Returns an ssh instance."""
+        """Returns a connected ssh instance."""
         ssh = SSHClient()
         ssh.load_system_host_keys()
         try:
-            self._connect(ssh)
+            return self._connect(ssh)
         except AuthenticationException as e:
             raise AuthenticationException(
-                'Got {}. Add user {} to authorized_keys on host {}'.format(
-                    e, self.remote_user, self.hostname))
+                'Got {} for user {}@{}'.format(
+                    str(e)[0:-1], self.remote_user, self.hostname))
         except BadHostKeyException as e:
             raise BadHostKeyException(
                 'Add server to known_hosts on host {}.'
@@ -96,7 +97,6 @@ class BaseEventHandler(PatternMatchingEventHandler):
         except socket.timeout:
             print('Cannot connect to host {}.'.format(self.hostname))
             return None
-        return ssh
 
 
 class RemoteFolderEventHandler(BaseEventHandler):
@@ -157,7 +157,8 @@ class RemoteFolderEventHandler(BaseEventHandler):
         try:
             scp.put(
                 source_filename,
-                destination_filename
+                destination_filename,
+                username=self.remote_user,
             )
         except IsADirectoryError:
             fileinfo = None

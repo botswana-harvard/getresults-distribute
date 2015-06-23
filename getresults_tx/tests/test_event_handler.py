@@ -1,7 +1,9 @@
+import pwd
 import os
 
 from django.conf import settings
 from django.test.testcases import TestCase
+from paramiko import AuthenticationException
 from reportlab.pdfgen import canvas
 
 from ..event_handlers import BaseEventHandler
@@ -32,6 +34,37 @@ class TestEventHandler(TestCase):
                 os.remove(name)
             except IOError:
                 pass
+
+    def test_failed_authentication(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = '~/' + os.path.join(settings.BASE_DIR.split(os.path.expanduser('~/'))[1], 'testdata/outbox')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        self.assertRaises(
+            AuthenticationException,
+            Server,
+            event_handler=BaseEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            archive_dir=archive_dir,
+            mime_types=['text/plain'],
+            file_patterns=['*.txt'],
+            remote_user='baddog'
+        )
+
+    def test_remote_folder(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = '~/' + os.path.join(settings.BASE_DIR.split(os.path.expanduser('~/'))[1], 'testdata/outbox')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        server = Server(
+            event_handler=BaseEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            archive_dir=archive_dir,
+            mime_types=['text/plain'],
+            file_patterns=['*.txt'],
+            remote_user=pwd.getpwuid(os.getuid()).pw_name
+        )
+        self.assertEquals(server.destination_dir, os.path.join(settings.BASE_DIR, 'testdata/outbox'))
 
     def test_mime_type(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
