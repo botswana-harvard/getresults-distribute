@@ -9,7 +9,8 @@
 
 from django.contrib import admin
 
-from .models import History, RemoteFolder, Upload
+from .actions import update_on_sent_action, upload_audit_action, upload_unaudit_action, update_pending_files
+from .models import History, RemoteFolder, Upload, Pending
 
 
 class HistoryAdmin(admin.ModelAdmin):
@@ -32,6 +33,25 @@ admin.site.register(RemoteFolder, RemoteFolderAdmin)
 
 
 class UploadAdmin(admin.ModelAdmin):
-    list_display = ('filename', 'upload_datetime', 'filesize', 'mime_type')
+    date_hierarchy = 'upload_datetime'
+    list_display = ('filename', 'upload_datetime', 'upload_user', 'sent', 'sent_datetime', 'audited', 'filesize', 'mime_type')
     search_fields = ('file', 'description')
+    list_filter = ('upload_datetime', 'sent', 'sent_datetime', 'audited_datetime', 'upload_user', 'auditor')
+    search_fields = ('filename', )
+    actions = [update_on_sent_action, upload_audit_action, upload_unaudit_action, update_pending_files]
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.upload_user = request.user
+        super(UploadAdmin, self).save_model(request, obj, form, change)
+
 admin.site.register(Upload, UploadAdmin)
+
+
+class PendingAdmin(admin.ModelAdmin):
+    date_hierarchy = 'filetimestamp'
+    list_display = ('filename', 'filesize', 'filetimestamp', 'last_updated')
+    list_filter = ('filetimestamp', )
+    search_fields = ('filename', )
+    actions = [update_pending_files, ]
+admin.site.register(Pending, PendingAdmin)

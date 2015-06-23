@@ -70,6 +70,7 @@ class BaseEventHandler(PatternMatchingEventHandler):
                 self.hostname,
                 username=self.remote_user,
                 timeout=self.timeout,
+                compress=True,
             )
         except SSHException:
             ssh.set_missing_host_key_policy(AutoAddPolicy())
@@ -77,6 +78,7 @@ class BaseEventHandler(PatternMatchingEventHandler):
                 self.hostname,
                 username=self.remote_user,
                 timeout=self.timeout,
+                compress=True,
             )
         return ssh
 

@@ -59,6 +59,7 @@ class Server(BaseEventHandler):
         super(Server, self).__init__(hostname, timeout, remote_user)
         self.event_handler = event_handler(
             hostname, timeout, remote_user) or BaseEventHandler(hostname, timeout, remote_user)
+        self.filename_max_length = 50
         self.hostname = hostname or 'localhost'
         self.port = 22
         self.timeout = timeout or 5.0
@@ -82,7 +83,6 @@ class Server(BaseEventHandler):
         self.touch_existing = touch_existing
         if touch_existing:
             self.update_file_mode(file_mode)
-        self.filename_max_length = 50
 
     def __str__(self):
         return 'Server started on {}'.format(timezone.now())

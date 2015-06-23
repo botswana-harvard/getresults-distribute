@@ -83,6 +83,8 @@ class History(models.Model):
     class Meta:
         app_label = 'getresults_tx'
         ordering = ('-sent_datetime', )
+        verbose_name = 'Sent History'
+        verbose_name_plural = 'Sent History'
 
 
 class RemoteFolder(models.Model):
@@ -107,6 +109,7 @@ class RemoteFolder(models.Model):
         app_label = 'getresults_tx'
         unique_together = (('folder', 'base_path'), ('folder', 'folder_hint'))
         ordering = ('label', 'base_path', 'folder')
+        verbose_name = 'Remote Folder Configuration'
 
 
 class Upload(models.Model):
@@ -131,6 +134,40 @@ class Upload(models.Model):
         null=True,
         blank=True)
 
+    upload_user = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True
+    )
+
+    sent = models.BooleanField(
+        default=False,
+        blank=True,
+        help_text='from history'
+    )
+
+    sent_datetime = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='from history'
+    )
+
+    audited = models.BooleanField(
+        default=False,
+        blank=True,
+    )
+
+    auditor = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True
+    )
+
+    audited_datetime = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
     def save(self, *args, **kwargs):
         self.filename = self.file.name
         self.filesize = self.file.size
@@ -140,6 +177,26 @@ class Upload(models.Model):
         app_label = 'getresults_tx'
         ordering = ('-upload_datetime', )
 
+
+class Pending(models.Model):
+
+    last_updated = models.DateTimeField(
+        default=timezone.now
+    )
+
+    filename = models.CharField(
+        max_length=50
+    )
+
+    filesize = models.FloatField()
+
+    filetimestamp = models.DateTimeField()
+
+    class Meta:
+        app_label = 'getresults_tx'
+        ordering = ('filename', )
+        verbose_name = 'Pending File'
+        verbose_name_plural = 'Pending Files'
 
 # @receiver(post_save, weak=False, dispatch_uid="enrollment_checklist_on_post_save")
 # def update_mime_type_post_save(sender, instance, raw, created, using, **kwargs):
