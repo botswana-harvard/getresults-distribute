@@ -6,15 +6,11 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 #
-import magic
-import os
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.utils import timezone
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
 upload_fs = FileSystemStorage(location=settings.GRTX_UPLOAD_FOLDER)
 
@@ -38,7 +34,7 @@ class History(models.Model):
         max_length=25)
 
     path = models.CharField(
-        max_length=100)
+        max_length=200)
 
     remote_path = models.CharField(
         max_length=200)
@@ -57,7 +53,7 @@ class History(models.Model):
         null=True)
 
     filename = models.CharField(
-        max_length=25)
+        max_length=50)
 
     filesize = models.FloatField()
 
@@ -95,7 +91,7 @@ class RemoteFolder(models.Model):
         max_length=100)
 
     base_path = models.CharField(
-        max_length=100)
+        max_length=200)
 
     folder_hint = models.CharField(
         max_length=25,
@@ -122,7 +118,7 @@ class Upload(models.Model):
     )
 
     filename = models.CharField(
-        max_length=25,
+        max_length=50,
         null=True,
         blank=True)
 

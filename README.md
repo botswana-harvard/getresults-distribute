@@ -24,6 +24,8 @@ on the remote host. `FolderHandler` selects the sub-folder using folder "hints" 
 
 For example:
 
+    import pwd
+    
     from getresults_tx.server import Server
     from getresults_tx.event_handlers import RemoteFolderEventHandler
     from getresults_tx.folder_handlers import FolderHandler
@@ -33,10 +35,12 @@ For example:
     archive_dir = '~/source/getresults-tx/getresults_tx/testdata/archive/'
     
     RemoteFolderEventHandler.folder_handler=FolderHandler()
+    remote_user = pwd.getpwuid(os.getuid()).pw_name
     
     server = Server(
         RemoteFolderEventHandler,
         hostname='localhost',
+        remote_user=remote_user,
         source_dir=source_dir,
         destination_dir=destination_dir,
         archive_dir=archive_dir,

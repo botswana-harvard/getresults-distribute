@@ -158,7 +158,6 @@ class RemoteFolderEventHandler(BaseEventHandler):
             scp.put(
                 source_filename,
                 destination_filename,
-                username=self.remote_user,
             )
         except IsADirectoryError:
             fileinfo = None
