@@ -13,7 +13,7 @@ For example:
         exclude_existing_files=True,
         mime_type='application/pdf',
         )
-    server.watch()
+    server.observe()
 
 The server events are the `watchdog` events, namely; `on_created()`, `on_modifier()`, `on_moved()` and `on_deleted()`.
 
