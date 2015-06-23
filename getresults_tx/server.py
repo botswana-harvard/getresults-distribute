@@ -82,6 +82,7 @@ class Server(BaseEventHandler):
         self.touch_existing = touch_existing
         if touch_existing:
             self.update_file_mode(file_mode)
+        self.filename_max_length = 50
 
     def __str__(self):
         return 'Server started on {}'.format(timezone.now())
@@ -151,12 +152,13 @@ class Server(BaseEventHandler):
         return None
 
     def filtered_listdir(self, listdir, basedir=None):
-        """Returns listdir as is or filtered by patterns and mime_type."""
+        """Returns listdir as is or filtered by patterns and mime_type and length of filename."""
         basedir = basedir or self.source_dir
         lst = []
         for f in listdir:
             if (magic.from_file(os.path.join(basedir, f), mime=True) in self.mime_types and
-                    [pat for pat in self.file_patterns if f.endswith(pat.split('*')[1])]):
+                    [pat for pat in self.file_patterns if f.endswith(pat.split('*')[1])] and
+                    len(f) <= self.filename_max_length):
                 lst.append(f)
         return lst
 

@@ -29,8 +29,30 @@ class TestRemoteFolderEventHandler(TestCase):
                 name = os.path.join(d, f)
                 try:
                     os.remove(name)
-                except IOError:
+                except IOError as e:
                     pass
+
+    def test_filter_listdir_filename_length(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
+        server = Server(
+            event_handler=RemoteFolderEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            file_patterns=['*.txt'],
+            mime_types=['text/plain'],
+        )
+        txt_50_filename = 'tmp1234567891234567891234567891234567891234567.txt'
+        txt_51_filename = 'tmp12345678912345678912345678912345678912345678.txt'
+        pdf_50_filename = 'tmp1234567891234567891234567891234567891234567.pdf'
+        pdf_51_filename = 'tmp12345678912345678912345678912345678912345678.pdf'
+        self.create_temp_pdf(os.path.join(source_dir, pdf_50_filename))
+        self.create_temp_pdf(os.path.join(source_dir, pdf_51_filename))
+        self.create_temp_txt(os.path.join(source_dir, txt_50_filename))
+        self.create_temp_txt(os.path.join(source_dir, txt_51_filename))
+        listdir = os.listdir(source_dir)
+        self.assertEquals([txt_50_filename], server.filtered_listdir(listdir, source_dir))
+        self.remove_temp_files([pdf_50_filename, pdf_51_filename, txt_50_filename, txt_51_filename], server)
 
     def test_filter_listdir_txt(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
