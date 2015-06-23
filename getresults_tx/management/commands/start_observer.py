@@ -41,7 +41,8 @@ class Command(BaseCommand):
         sys.stdout.write('patterns: {}\n'.format(','.join([x for x in server.file_patterns])))
         sys.stdout.write('mime: {}\n'.format(','.join([x.decode() for x in server.mime_types])))
         sys.stdout.write('Upload folder: {}\n'.format(server.source_dir))
-        sys.stdout.write('Remote folder: {}@{}:{}\n'.format(server.user, server.hostname, server.destination_dir))
+        sys.stdout.write(
+            'Remote folder: {}@{}:{}\n'.format(server.remote_user, server.hostname, server.destination_dir))
         sys.stdout.write('Archive folder: {}\n'.format(server.archive_dir))
         sys.stdout.write('\npress CTRL-C to stop.\n\n')
         server.observe()
