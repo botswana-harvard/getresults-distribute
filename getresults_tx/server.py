@@ -17,7 +17,6 @@ from watchdog.observers import Observer
 
 from .event_handlers import BaseEventHandler
 from .file_handlers import BaseFileHandler
-from getresults_tx.file_handlers import BaseFileHandler
 
 
 def touch(fname, mode=0o666, dir_fd=None, **kwargs):

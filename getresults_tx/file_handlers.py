@@ -45,6 +45,7 @@ class RegexPdfFileHandler(BaseFileHandler):
                 # in <string>' requires string as left operand, not int
                 # in the filter.py module
                 # just forget it and return True
+                print('unable to read {}'.format(filename))
                 return self.match_string
             except PdfReadError:
                 pass
