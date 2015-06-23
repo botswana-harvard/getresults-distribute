@@ -16,6 +16,8 @@ from paramiko import SFTPClient
 from watchdog.observers import Observer
 
 from .event_handlers import BaseEventHandler
+from .file_handlers import BaseFileHandler
+from getresults_tx.file_handlers import BaseFileHandler
 
 
 def touch(fname, mode=0o666, dir_fd=None, **kwargs):
@@ -34,7 +36,7 @@ class Server(BaseEventHandler):
     def __init__(self, event_handler, hostname=None, timeout=None, remote_user=None,
                  source_dir=None, destination_dir=None, archive_dir=None,
                  mime_types=None, file_patterns=None, file_mode=None, touch_existing=None,
-                 mkdir_local=None, mkdir_remote=None, **kwargs):
+                 mkdir_local=None, mkdir_remote=None, file_handler=None, **kwargs):
         """
         :param event_handler: Custom event handler for added and removed files. If omitted the
                               :class:`BaseEventHandler` will be used by default.
@@ -57,8 +59,20 @@ class Server(BaseEventHandler):
         :type mkdir_remote: boolean
         """
         super(Server, self).__init__(hostname, timeout, remote_user)
-        self.event_handler = event_handler(
-            hostname, timeout, remote_user) or BaseEventHandler(hostname, timeout, remote_user)
+        try:
+            self.event_handler = event_handler(hostname, timeout, remote_user)
+        except TypeError as e:
+            if 'object is not callable' in str(e):
+                self.event_handler = BaseEventHandler(hostname, timeout, remote_user)
+            else:
+                raise
+        try:
+            self.file_handler = file_handler()
+        except TypeError as e:
+            if 'object is not callable' in str(e):
+                self.file_handler = BaseFileHandler()
+            else:
+                raise
         self.filename_max_length = 50
         self.hostname = hostname or 'localhost'
         self.port = 22
@@ -156,10 +170,12 @@ class Server(BaseEventHandler):
         basedir = basedir or self.source_dir
         lst = []
         for f in listdir:
-            if (magic.from_file(os.path.join(basedir, f), mime=True) in self.mime_types and
+            mime_type = magic.from_file(os.path.join(basedir, f), mime=True)
+            if (mime_type in self.mime_types and
                     [pat for pat in self.file_patterns if f.endswith(pat.split('*')[1])] and
                     len(f) <= self.filename_max_length):
-                lst.append(f)
+                if self.file_handler.process(f, basedir, mime_type):
+                    lst.append(f)
         return lst
 
     def mkdir_p(self, sftp, remote_directory):

@@ -1,7 +1,8 @@
 import os
 import re
 
-from getresults_tx.models import RemoteFolder
+from .models import RemoteFolder
+from .constants import PDF
 
 
 class FolderHandlerError(Exception):
@@ -24,8 +25,6 @@ class FolderSelection(object):
 
     def __str__(self):
         return self.name
-
-PDF = b'application/pdf'
 
 
 class BaseFolderHandler(object):

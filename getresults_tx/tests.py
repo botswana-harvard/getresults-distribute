@@ -1,26 +1,30 @@
 import magic
-
+import pwd
 import os
 
-from reportlab.pdfgen import canvas
-from django.test.testcases import TestCase
 from django.conf import settings
+from django.test.testcases import TestCase
+from paramiko import AuthenticationException
+from reportlab.pdfgen import canvas
 
-from ..folder_handlers import FolderHandler
-from ..event_handlers import RemoteFolderEventHandler
-from ..server import Server
-from ..utils import load_remote_folders_from_csv
+from getresults_tx.folder_handlers import FolderHandler
+from getresults_tx.event_handlers import RemoteFolderEventHandler
+from getresults_tx.event_handlers import BaseEventHandler
+from getresults_tx.server import Server
+from getresults_tx.utils import load_remote_folders_from_csv
+from getresults_tx.file_handlers import RegexPdfFileHandler
 
 
-class TestRemoteFolderEventHandler(TestCase):
+class Tests(TestCase):
 
-    def create_temp_txt(self, filename):
+    def create_temp_txt(self, filename, text=None):
         with open(filename, 'w') as f:
-            f.write('this is a test file')
+            f.write(text or 'this is a test file')
 
-    def create_temp_pdf(self, filename):
+    def create_temp_pdf(self, filename, text=None):
         c = canvas.Canvas(filename)
-        c.drawString(100, 100, "Hello World")
+        c.drawString(100, 200, 'hello world ' + str(text) + '\n' or "Hello World")
+        c.showPage()
         c.save()
 
     def remove_temp_files(self, files, server):
@@ -29,8 +33,179 @@ class TestRemoteFolderEventHandler(TestCase):
                 name = os.path.join(d, f)
                 try:
                     os.remove(name)
-                except IOError as e:
+                except IOError:
                     pass
+
+    def test_failed_authentication(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = '~/' + os.path.join(settings.BASE_DIR.split(os.path.expanduser('~/'))[1], 'testdata/outbox')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        self.assertRaises(
+            AuthenticationException,
+            Server,
+            event_handler=BaseEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            archive_dir=archive_dir,
+            mime_types=['text/plain'],
+            file_patterns=['*.txt'],
+            remote_user='baddog'
+        )
+
+    def test_remote_folder(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = '~/' + os.path.join(settings.BASE_DIR.split(os.path.expanduser('~/'))[1], 'testdata/outbox')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        server = Server(
+            event_handler=BaseEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            archive_dir=archive_dir,
+            mime_types=['text/plain'],
+            file_patterns=['*.txt'],
+            remote_user=pwd.getpwuid(os.getuid()).pw_name
+        )
+        self.assertEquals(server.destination_dir, os.path.join(settings.BASE_DIR, 'testdata/outbox'))
+
+    def test_mime_type(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        server = Server(
+            event_handler=BaseEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            archive_dir=archive_dir,
+            mime_types=['text/plain'],
+            file_patterns=['*.txt'])
+        self.assertEquals(server.mime_types, [b'text/plain'])
+
+    def test_folder(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
+        server = Server(
+            event_handler=BaseEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            mime_types=['text/plain'],
+            file_patterns=['*.txt'],
+        )
+        self.assertEquals(source_dir, server.source_dir)
+        self.assertEquals(destination_dir, server.destination_dir)
+        self.assertFalse(server.archive_dir)
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        server = Server(
+            event_handler=BaseEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            archive_dir=archive_dir,
+            mime_types=['text/plain'],
+            file_patterns=['*.txt'],
+        )
+        self.assertEquals(archive_dir, server.archive_dir)
+
+    def test_bad_folder(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inboxnnnnn')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
+        self.assertRaises(
+            FileNotFoundError,
+            Server,
+            event_handler=BaseEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            mime_types=['text/plain'],
+            file_patterns=['*.txt'],
+        )
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outboxttt')
+        self.assertRaises(
+            FileNotFoundError,
+            Server,
+            event_handler=BaseEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            mime_types=['text/plain'],
+            file_patterns=['*.txt'],
+        )
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archiiive')
+        self.assertRaises(
+            FileNotFoundError,
+            Server,
+            event_handler=BaseEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            archive_dir=archive_dir,
+            mime_types=['text/plain'],
+            file_patterns=['*.txt'],
+        )
+
+    def test_make_local_folder(self):
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
+        archive_dir = os.path.join(settings.BASE_DIR, '/tmp/tmp_archive')
+        self.assertRaises(
+            FileNotFoundError,
+            Server,
+            event_handler=BaseEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            archive_dir=archive_dir,
+            mime_types=['text/plain'],
+            file_patterns=['*.txt'],
+        )
+        self.assertIsInstance(
+            Server(
+                event_handler=BaseEventHandler,
+                source_dir=source_dir,
+                destination_dir=destination_dir,
+                archive_dir=archive_dir,
+                mime_types=['text/plain'],
+                file_patterns=['*.txt'],
+                mkdir_local=True),
+            Server,
+        )
+        os.rmdir('/tmp/tmp_archive')
+
+    def test_make_remote_folder(self):
+        try:
+            os.rmdir('/tmp/tmp_getresults_tx_out')
+        except IOError:
+            pass
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join('/tmp/tmp_getresults_tx_out')
+        self.assertRaises(
+            FileNotFoundError,
+            Server,
+            event_handler=BaseEventHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            mime_types=['text/plain'],
+            file_patterns=['*.txt'],
+        )
+
+        self.assertIsInstance(
+            Server(
+                event_handler=BaseEventHandler,
+                source_dir=source_dir,
+                destination_dir=destination_dir,
+                mime_types=['text/plain'],
+                file_patterns=['*.txt'],
+                mkdir_remote=True),
+            Server,
+        )
+        self.assertIsInstance(
+            Server(
+                event_handler=BaseEventHandler,
+                source_dir=source_dir,
+                destination_dir=destination_dir,
+                mime_types=['text/plain'],
+                file_patterns=['*.txt']),
+            Server,
+        )
+        try:
+            os.rmdir('/tmp/tmp_getresults_tx_out')
+        except IOError:
+            pass
 
     def test_filter_listdir_filename_length(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
@@ -230,3 +405,24 @@ class TestRemoteFolderEventHandler(TestCase):
             os.rmdir(folder_selection.path)
         except IOError:
             pass
+
+    def test_file_handler(self):
+        load_remote_folders_from_csv()
+        RegexPdfFileHandler.regex = r'066\-[0-9]{8}\-[0-9]{1}'
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
+        filename = '066-12000001-3.pdf'
+        self.create_temp_pdf(os.path.join(source_dir, filename), '066-12000001-3')
+        self.assertEqual(magic.from_file(os.path.join(source_dir, filename), mime=True), b'application/pdf')
+        server = Server(
+            event_handler=RemoteFolderEventHandler,
+            file_handler=RegexPdfFileHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            file_patterns=['*.pdf'],
+            mime_types=['application/pdf'],
+            mkdir_remote=False)
+        server.file_handler.process(source_dir, filename, b'application/pdf')
+        self.assertTrue(server.file_handler.process(source_dir, filename, b'application/pdf'))
+        self.assertEquals(server.file_handler.match_string, '066-12000001-3')
+        self.remove_temp_files([os.path.join(source_dir, filename)], server)

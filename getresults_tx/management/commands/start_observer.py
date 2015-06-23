@@ -17,6 +17,7 @@ from paramiko import SSHException
 
 from getresults_tx.server import Server
 from getresults_tx.event_handlers import RemoteFolderEventHandler
+from getresults_tx.file_handlers import RegexPdfFileHandler
 
 
 class Command(BaseCommand):
@@ -29,9 +30,11 @@ class Command(BaseCommand):
         archive_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_ARCHIVE_FOLDER)
         file_patterns = settings.GRTX_FILE_PATTERNS
         mime_types = settings.GRTX_MIME_TYPES
+        RegexPdfFileHandler.regex = r'066\-[0-9]{8}\-[0-9]{1}'
         try:
             server = Server(
                 RemoteFolderEventHandler,
+                file_handler=RegexPdfFileHandler,
                 hostname=hostname,
                 source_dir=source_dir,
                 destination_dir=destination_dir,
