@@ -31,7 +31,7 @@ Create your django project.
 
 	django-admin startproject project
 
-Install getresulst-tx
+Install getresults-tx
 	
 	pip install -e git+https://github.com/botswana-harvard/getresults-tx@develop#g=getresults_tx
 
@@ -63,6 +63,16 @@ Add to `settings.py`:
 	# must specify both the pattern and mime type
 	GRTX_FILE_PATTERNS = ['*.pdf']
 	GRTX_MIME_TYPES = ['application/pdf']
+
+Choose your database:
+
+	DATABASES = {...}
+
+Migrate:
+	
+	python manage.py makemigrations getresults_tx
+	python manage.py migrate getresults_tx
+	
 
 Folders
 -------
