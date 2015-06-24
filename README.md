@@ -111,7 +111,12 @@ sub folders of the destination folder based on an expected pattern or _hint_ in 
 
 File Handlers
 -------------
-
+A file handler is called when the observer selects files. So in addition to checking the `mime_type` and 
+the `file_pattern` the file handler will be called. For example, class `FileHandler` attempts to extract text
+from a PDF and match a part of the filename to text in the PDF. In our case, the PDF is a clinical test
+result. The PDF filenames are either a `specimen_identifier` or `subject_identifier`. Both values must appear 
+somewhere in the clinical test result. By checking the text we minimize the chance of sending an incorrectly
+named PDF file.
     
 SSH/SCP
 -------
