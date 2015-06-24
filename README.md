@@ -1,3 +1,4 @@
+[![Code Health](https://landscape.io/github/botswana-harvard/getresults-tx/develop/landscape.svg?style=flat)](https://landscape.io/github/botswana-harvard/getresults-tx/develop)
 [![Dependency Status](https://www.versioneye.com/user/projects/558a5b6e306662001e00032e/badge.svg?style=flat)](https://www.versioneye.com/user/projects/558a5b6e306662001e00032e)
 
 # getresults-tx
