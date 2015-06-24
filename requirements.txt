@@ -1,0 +1,11 @@
+Django==1.8.2
+psycopg2
+python-dateutil
+Unipath
+pytz
+python-magic
+watchdog
+paramiko
+scp
+reportlab  # for tests only
+pypdf2

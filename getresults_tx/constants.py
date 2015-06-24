@@ -1,0 +1,1 @@
+PDF = b'application/pdf'
