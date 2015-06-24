@@ -20,9 +20,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import pwd
 import os
-
 from unipath import Path
 
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -89,23 +87,23 @@ WSGI_APPLICATION = 'getresults_tx.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
+# DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#    }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'gr',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'gr',
-#         'USER': 'postgres',
-#         'PASSWORD': 'postgres',
-#         'HOST': 'localhost',
-#         'PORT': '',
-#     }
-# }
 
 # DATABASES = {
 #     'default': {
@@ -147,17 +145,19 @@ STATICFILES_FINDERS = (
 )
 
 GIT_DIR = BASE_DIR.ancestor(1)
-
 MEDIA_ROOT = os.path.expanduser('~/getresults_files/')
 MEDIA_URL = '/media/'
 
-# remote folders
-GRTX_REMOTE_HOSTNAME = 'edc4.bhp.org.bw'
-GRTX_REMOTE_USERNAME = 'erikvw'
-GRTX_REMOTE_FOLDER = '~/viral_load'
-
 # local folders are relative to MEDIA_ROOT
+GRTX_REMOTE_HOSTNAME = '10.15.15.2'
+GRTX_REMOTE_USERNAME = 'bhsharvard'
+# GRTX_REMOTE_HOSTNAME = '192.168.1.84'
+# GRTX_REMOTE_USERNAME = 'erikvw'
+# GRTX_REMOTE_HOSTNAME = 'edc4.bhp.org.bw'
+# GRTX_REMOTE_HOSTNAME = '192.168.1.22'
+# GRTX_REMOTE_USERNAME = 'erikvw'
 GRTX_UPLOAD_FOLDER = 'upload/'
+GRTX_REMOTE_FOLDER = '~/viral_load'
 GRTX_ARCHIVE_FOLDER = 'archive/'
 GRTX_FILE_PATTERNS = ['*.pdf']
 GRTX_MIME_TYPES = ['application/pdf']
