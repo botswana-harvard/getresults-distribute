@@ -96,27 +96,25 @@ For example:
         mkdir_remote=True)
     server.observe()
 
-
-On a server `observe` event, files are collated into sub-folders of the destination folder (`server.destination_dir`).
-The sub-folder name is found by querying the `RemoteFolder` model using the folder_hint that matches the regular expression. For example, `re.match`es filename *066-129999-9.pdf* and then parses *12* as the folder hint.:
-	
-	RemoteFolder.objects.get(base_path=base_path, folder_hint='12', label='bhs') 
-	
-where `base_path` is `server.destination_dir`. See also `remote_folder.csv` in testdata.
-    
 Folder Handlers
 ---------------
 A custom folder handler can be set on the event handler. For example, class `FolderHandler` collates files into 
-sub folders of the destination folder based on an expected pattern or _hint_ in the filename. 
+sub folders in the remote folder. It determines the folder to target based on an expected pattern or _hint_ in
+the filename. The hint is queried against model `RemoteFolder`, for example, match *12* from  *066-129999-9.pdf*
+
+	RemoteFolder.objects.get(base_path=base_path, folder_hint='12', label='bhs') 
+	
+where `base_path` is `server.destination_dir`. See also `remote_folder.csv` in testdata.
+     
 
 File Handlers
 -------------
-A file handler is called when the observer selects files. So in addition to checking the `mime_type` and 
-the `file_pattern` the file handler will be called. For example, class `FileHandler` attempts to extract text
-from a PDF and match a part of the filename to text in the PDF. In our case, the PDF is a clinical test
-result. The PDF filenames are either a `specimen_identifier` or `subject_identifier`. Both values must appear 
-somewhere in the clinical test result. By checking the text we minimize the chance of sending an incorrectly
-named PDF file.
+A file handler is called when the observer selects files (`server.filter_listdir`). So in addition to checking
+the `mime_type` and the `file_pattern` the file handler will be called. For example, class `FileHandler` 
+attempts to extract text from a PDF and match a part of the filename to text in the PDF. In our case, the PDF
+is a clinical test result. The PDF filenames are either a `specimen_identifier` or `subject_identifier`. Both
+values must appear somewhere in the clinical test result. By checking the text we minimize the chance of
+sending an incorrectly named PDF file.
     
 SSH/SCP
 -------
