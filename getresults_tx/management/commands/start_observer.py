@@ -36,6 +36,7 @@ class Command(BaseCommand):
                 RemoteFolderEventHandler,
                 file_handler=RegexPdfFileHandler,
                 hostname=hostname,
+                trusted_host=True,
                 source_dir=source_dir,
                 destination_dir=destination_dir,
                 archive_dir=archive_dir,

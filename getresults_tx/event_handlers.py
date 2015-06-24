@@ -72,7 +72,7 @@ class BaseEventHandler(PatternMatchingEventHandler):
     def connect(self):
         """Returns a connected ssh instance."""
         self.ssh.load_system_host_keys()
-        if self.hostname == 'localhost':
+        if self.trusted_host:
             self.ssh.set_missing_host_key_policy(AutoAddPolicy())
         while True:
             try:

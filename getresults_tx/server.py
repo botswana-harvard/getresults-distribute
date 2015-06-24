@@ -36,7 +36,8 @@ class Server(BaseEventHandler):
     def __init__(self, event_handler, hostname=None, timeout=None, remote_user=None,
                  source_dir=None, destination_dir=None, archive_dir=None,
                  mime_types=None, file_patterns=None, file_mode=None, touch_existing=None,
-                 mkdir_local=None, mkdir_remote=None, file_handler=None, **kwargs):
+                 mkdir_local=None, mkdir_remote=None, file_handler=None,
+                 trusted_host=None, **kwargs):
         """
         See management command :func:`start_observer` or tests for usage.
 
@@ -86,6 +87,7 @@ class Server(BaseEventHandler):
                 raise
         self.filename_max_length = 50
         self.hostname = hostname or 'localhost'
+        self.trusted_host = True if (trusted_host or self.hostname == 'localhost') else False
         self.port = 22
         self.timeout = timeout or 5.0
         try:
