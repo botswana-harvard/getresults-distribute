@@ -8,8 +8,8 @@
 #
 
 import os
+import socket
 import sys
-import time
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -43,7 +43,7 @@ class Command(BaseCommand):
                 mime_types=mime_types,
                 touch_existing=True,
                 mkdir_remote=True)
-        except (ConnectionResetError, SSHException) as e:
+        except (ConnectionResetError, SSHException, ConnectionRefusedError, socket.gaierror) as e:
             raise CommandError(str(e))
         sys.stdout.write('\n' + str(server) + '\n')
         sys.stdout.write('patterns: {}\n'.format(','.join([x for x in server.file_patterns])))

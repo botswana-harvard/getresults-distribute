@@ -14,11 +14,12 @@ import pwd
 import random
 import socket
 import string
+import time
 
 from datetime import datetime
-from paramiko import SSHClient, AutoAddPolicy
+from paramiko import AutoAddPolicy
 from paramiko.ssh_exception import BadHostKeyException, AuthenticationException, SSHException
-from scp import SCPClient
+from scp import SCPClient, SCPException
 from watchdog.events import PatternMatchingEventHandler
 
 from django.conf import settings
@@ -42,6 +43,7 @@ class BaseEventHandler(PatternMatchingEventHandler):
     def __init__(self, hostname, timeout, remote_user=None):
         self.hostname = hostname or 'localhost'
         self.timeout = timeout or 5.0
+        self.ssh = None
         try:
             self.remote_user = remote_user or settings.GRTX_REMOTE_USERNAME
         except AttributeError:
@@ -64,45 +66,57 @@ class BaseEventHandler(PatternMatchingEventHandler):
     def on_moved(self, event):
         self.process(event)
 
-    def _connect(self, ssh):
-        try:
-            ssh.connect(
-                self.hostname,
-                username=self.remote_user,
-                timeout=self.timeout,
-                compress=True,
-            )
-        except SSHException:
-            ssh.set_missing_host_key_policy(AutoAddPolicy())
-            ssh.connect(
-                self.hostname,
-                username=self.remote_user,
-                timeout=self.timeout,
-                compress=True,
-            )
-        return ssh
+    def reconnect(self):
+        self.connect()
 
     def connect(self):
         """Returns a connected ssh instance."""
-        ssh = SSHClient()
-        ssh.load_system_host_keys()
-        try:
-            return self._connect(ssh)
-        except AuthenticationException as e:
-            raise AuthenticationException(
-                'Got {} for user {}@{}'.format(
-                    str(e)[0:-1], self.remote_user, self.hostname))
-        except BadHostKeyException as e:
-            raise BadHostKeyException(
-                'Add server to known_hosts on host {}.'
-                ' Got {}.'.format(e, self.hostname))
-        except socket.timeout:
-            print('Cannot connect to host {}.'.format(self.hostname))
-            return None
+        self.ssh.load_system_host_keys()
+        if self.hostname == 'localhost':
+            self.ssh.set_missing_host_key_policy(AutoAddPolicy())
+        while True:
+            try:
+                self.ssh.connect(
+                    self.hostname,
+                    username=self.remote_user,
+                    timeout=self.timeout,
+                    compress=True,
+                )
+                print('Connected to host {}.'.format(self.hostname))
+                break
+            except socket.timeout:
+                print('Cannot connect to host {}. Retrying ...{}'.format(
+                    self.hostname, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                time.sleep(5)
+            except ConnectionRefusedError as e:
+                print('{} for {}@{} {}'.format(
+                    str(e), self.remote_user, self.hostname,
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                time.sleep(5)
+            except AuthenticationException as e:
+                raise AuthenticationException(
+                    'Got {} for user {}@{}'.format(
+                        str(e)[0:-1], self.remote_user, self.hostname))
+            except BadHostKeyException as e:
+                raise BadHostKeyException(
+                    'Add server to known_hosts on host {}.'
+                    ' Got {}.'.format(e, self.hostname))
+            except socket.gaierror:
+                raise socket.gaierror('Hostname {} not known or not available'.format(self.hostname))
+            except ConnectionResetError as e:
+                raise ConnectionResetError('{} for {}@{}'.format(str(e), self.remote_user, self.hostname))
+            except SSHException as e:
+                raise SSHException('{} for {}@{}'.format(str(e), self.remote_user, self.hostname))
 
 
 class RemoteFolderEventHandler(BaseEventHandler):
 
+    """A folder handler that puts the file onto a remote folder
+    in a specific sub folder based on the file name.
+
+    The sent History model is updated and linked to the file renamed and
+    placed in the archive folder.
+    """
     folder_handler = FolderHandler()
     patterns = ['*.*']
 
@@ -115,17 +129,24 @@ class RemoteFolderEventHandler(BaseEventHandler):
 
     def process_added(self, event):
         print('{} {}'.format(event.event_type, event.src_path))
-        ssh = self.connect()
         filename = event.src_path.split('/')[-1:][0]
         path = os.path.join(self.source_dir, filename)
         mime_type = magic.from_file(path, mime=True)
         if mime_type in self.mime_types:
             folder_selection = self.select_destination_dir(filename, mime_type)
             if not folder_selection.path:
+                print('Copy failed. Unable to select remote folder for {}'.format(filename))
                 return None
             else:
-                with SCPClient(ssh.get_transport()) as scp:
-                    fileinfo = self.put(scp, filename, folder_selection.path)
+                with SCPClient(self.ssh.get_transport()) as scp:
+                    try:
+                        fileinfo = self.put(scp, filename, folder_selection.path)
+                    except SCPException as e:
+                        if 'No response from server' in str(e):
+                            self.reconnect()
+                            fileinfo = self.put(scp, filename, folder_selection.path)
+                        else:
+                            raise
                 if fileinfo:
                     if self.archive_dir:
                         fileinfo['archive_filename'] = self.archive_filename(filename)

@@ -152,7 +152,7 @@ MEDIA_ROOT = os.path.expanduser('~/getresults_files/')
 MEDIA_URL = '/media/'
 
 # remote folders
-GRTX_REMOTE_HOSTNAME = '192.168.1.216'
+GRTX_REMOTE_HOSTNAME = 'edc4.bhp.org.bw'
 GRTX_REMOTE_USERNAME = 'erikvw'
 GRTX_REMOTE_FOLDER = '~/viral_load'
 

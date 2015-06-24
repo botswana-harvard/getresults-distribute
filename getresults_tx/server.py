@@ -17,6 +17,7 @@ from watchdog.observers import Observer
 
 from .event_handlers import BaseEventHandler
 from .file_handlers import BaseFileHandler
+from paramiko.client import SSHClient
 
 
 def touch(fname, mode=0o666, dir_fd=None, **kwargs):
@@ -37,8 +38,19 @@ class Server(BaseEventHandler):
                  mime_types=None, file_patterns=None, file_mode=None, touch_existing=None,
                  mkdir_local=None, mkdir_remote=None, file_handler=None, **kwargs):
         """
+        See management command :func:`start_observer` or tests for usage.
+
         :param event_handler: Custom event handler for added and removed files. If omitted the
                               :class:`BaseEventHandler` will be used by default.
+
+        :param file_handler: Custom file handler. If omitted the :class:`BaseFileHandler`
+                             will be used by default.
+
+        :param remote_user: the remote user name on hostname to use when connecting. (Default: current user).
+        :type remote_user: str
+
+        :param hostname: the remote host to connect to. (Default: 'localhost').
+        :type hostname: str
 
         :param mime_type: comma separated list of mime_types. (Default: 'text/plain').
         :type mime_type: str
@@ -87,7 +99,9 @@ class Server(BaseEventHandler):
         self.mkdir_remote = mkdir_remote
         self.mkdir_local = mkdir_local
         self.source_dir = self.local_folder(source_dir, update_permissions=True)
-        self.destination_dir = self.remote_folder(destination_dir)
+        with SSHClient() as self.ssh:
+            self.connect()
+            self.destination_dir = self.remote_folder(destination_dir)
         if archive_dir:
             self.archive_dir = self.local_folder(archive_dir)
         else:
@@ -111,18 +125,20 @@ class Server(BaseEventHandler):
         return event_handler
 
     def observe(self, sleep=None):
-        observer = Observer()
-        observer.schedule(self.event_handler, path=self.source_dir)
-        observer.start()
-        if self.touch_existing:
-            self.touch_files()
-
-        try:
-            while True:
-                time.sleep(sleep or 1)
-        except KeyboardInterrupt:
-            observer.stop()
-        observer.join()
+        with SSHClient() as self.ssh:
+            self.connect()
+            self.event_handler.ssh = self.ssh
+            observer = Observer()
+            observer.schedule(self.event_handler, path=self.source_dir)
+            observer.start()
+            if self.touch_existing:
+                self.touch_files()
+            try:
+                while True:
+                    time.sleep(sleep or 1)
+            except KeyboardInterrupt:
+                observer.stop()
+            observer.join()
 
     def touch_files(self):
         for filename in self.filtered_listdir(os.listdir(self.source_dir), self.source_dir):
@@ -148,21 +164,21 @@ class Server(BaseEventHandler):
 
     def remote_folder(self, path, mkdir_remote=None):
         """Returns the path or raises an Exception if path does not exist on the remote host."""
-        ssh = self.connect()
-        if ssh:
-            if path[0:1] == b'~' or path[0:1] == '~':
-                _, stdout, _ = ssh.exec_command("pwd")
-                path = os.path.join(stdout.readlines()[0].strip(), path.replace('~/', ''))
-            with SFTPClient.from_transport(ssh.get_transport()) as sftp:
-                try:
-                    sftp.chdir(path)
-                except IOError:
-                    if mkdir_remote or self.mkdir_remote:
-                        self.mkdir_p(sftp, path)
-                    else:
-                        raise FileNotFoundError('{} not found on remote host.'.format(path))
-            return path
-        return None
+        remote_path = None
+        if path[0:1] == b'~' or path[0:1] == '~':
+            _, stdout, _ = self.ssh.exec_command("pwd")
+            remote_path = os.path.join(stdout.readlines()[0].strip(), path.replace('~/', ''))
+        else:
+            remote_path = path
+        with SFTPClient.from_transport(self.ssh.get_transport()) as sftp:
+            try:
+                sftp.chdir(remote_path)
+            except IOError:
+                if mkdir_remote or self.mkdir_remote:
+                    self.mkdir_p(sftp, remote_path)
+                else:
+                    raise FileNotFoundError('{} not found on remote host.'.format(remote_path))
+        return remote_path
 
     def filtered_listdir(self, listdir, basedir=None):
         """Returns listdir as is or filtered by patterns and mime_type and length of filename."""
