@@ -145,6 +145,9 @@ class RemoteFolderEventHandler(BaseEventHandler):
                         if 'No response from server' in str(e):
                             self.reconnect()
                             fileinfo = self.put(scp, filename, folder_selection.path)
+                        elif 'Permission denied' in str(e):
+                            print('{}, skipping ...'.format(str(e)))
+                            fileinfo = None  # skip
                         else:
                             raise
                 if fileinfo:
