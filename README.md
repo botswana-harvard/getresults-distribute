@@ -2,8 +2,7 @@
 
 # getresults-tx
 
-transfer file based results, e.g. PDFs, to ?
-
+Requires python3. Django 1.7 or 1.8.
 
 For example:
 
@@ -24,10 +23,27 @@ For example:
 
 The server events are the `watchdog` events, namely; `on_created()`, `on_modifier()`, `on_moved()` and `on_deleted()`.
 
+
 Setup
 -----
 
+Create your django project.
+
+	django-admin startproject project
+
+Install getresulst-tx
+	
+	pip install -e git+https://github.com/botswana-harvard/getresults-tx@develop#g=getresults_tx
+
 Add to `settings.py`:
+
+	INSTALLED_APPS = (
+	    ...
+	    ...
+	    'getresults_tx',
+	    'project',
+	)
+
 
 	MEDIA_URL = '/media/'
 
