@@ -71,4 +71,4 @@ def unacknowledge_action(modeladmin, request, queryset):
         obj.ack_user = None
         obj.acknowledged = False
         obj.save()
-upload_unaudit_action.short_description = "Undo an acknowledgement."
+unacknowledge_action.short_description = "Undo an acknowledgement."
