@@ -19,9 +19,9 @@ class HistoryAdmin(admin.ModelAdmin):
 
     list_display = ('filename', 'archive', 'filesize', 'filetimestamp',
                     'sent_datetime', 'ack_datetime', 'ack_user', 'mime_type',
-                    'remote_hostname', 'status', 'remote_folder_hint',
+                    'remote_hostname', 'remote_folder_hint',
                     'remote_folder')
-    list_filter = ('status', 'sent_datetime', 'acknowledged', 'ack_datetime',
+    list_filter = ('sent_datetime', 'acknowledged', 'ack_datetime',
                    'remote_folder', 'remote_folder_hint', 'ack_user')
     search_fields = ('filename', 'ack_user')
     actions = [update_pending_files, ]
