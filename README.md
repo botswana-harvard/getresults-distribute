@@ -4,7 +4,21 @@
 
 Requires python3. Django 1.7 or 1.8.
 
-For example:
+	>>> python manage.py start_observer
+	
+	Connected to host edc.sample.com.
+
+	Server started on 2015-06-24 14:30:59.665896+00:00
+	patterns: *.pdf
+	mime: application/pdf
+	Upload folder: /home/edc_user/getresults_files/upload
+	Remote folder: remote_user@edc.sample.com:/home/remote_user/viral_load
+	Archive folder: /home/edc_user/getresults_files/archive
+
+	press CTRL-C to stop.
+
+
+Look at the management command code but a very simple example is:
 
     source_dir = os.path.join('~/getresult/upload')
     archive_dir = os.path.join('~/getresult/archive')
