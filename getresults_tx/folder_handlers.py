@@ -91,7 +91,7 @@ class FolderHandler(BaseFolderHandler):
         return {
             'bhs': self.bhs_folder_hint,
             'cdc1': self.cdc1_folder_hint,
-            # 'cdc2': self.cdc2_folder_hint,
+            'cdc2': self.cdc2_folder_hint,
         }
 
     def bhs_folder_hint(self, filename, mime_type):
@@ -115,5 +115,5 @@ class FolderHandler(BaseFolderHandler):
         otherwise returns None."""
         pattern = re.compile(r'^[0-9]{2}\-[0-9]{3}\-[0-9]{2}\-[0-9]{2}')
         if mime_type == PDF and re.match(pattern, filename):
-            return filename[0:2]
+            return filename[3:5]
         return None
