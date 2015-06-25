@@ -63,3 +63,12 @@ def update_pending_files(modeladmin, request, queryset):
             filetimestamp=tz.localize(datetime.fromtimestamp(fileinfo.st_mtime))
         )
 update_pending_files.short_description = "Update the list of uploaded files pending delivery."
+
+
+def unacknowledge_action(modeladmin, request, queryset):
+    for obj in queryset:
+        obj.ack_datetime = None
+        obj.ack_user = None
+        obj.acknowledged = None
+        obj.save()
+upload_unaudit_action.short_description = "Undo an acknowledgement."

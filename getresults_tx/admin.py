@@ -9,7 +9,9 @@
 
 from django.contrib import admin
 
-from .actions import update_on_sent_action, upload_audit_action, upload_unaudit_action, update_pending_files
+from .actions import (update_on_sent_action, upload_audit_action,
+                      upload_unaudit_action, update_pending_files,
+                      unacknowledge_action)
 from .models import History, RemoteFolder, Upload, Pending, Acknowledgment, LogReaderHistory
 
 
@@ -24,7 +26,7 @@ class HistoryAdmin(admin.ModelAdmin):
     list_filter = ('sent_datetime', 'acknowledged', 'ack_datetime',
                    'remote_folder', 'remote_folder_hint', 'ack_user')
     search_fields = ('filename', 'ack_user')
-    actions = [update_pending_files, ]
+    actions = [update_pending_files, unacknowledge_action]
 admin.site.register(History, HistoryAdmin)
 
 
