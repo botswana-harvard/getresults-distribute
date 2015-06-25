@@ -16,10 +16,10 @@ install:
   - pip install -q -r requirements.txt --use-mirrors
 
 before_script:
-  - flake8 getresults
+  - flake8 getresults_tx
 
 script: 
-  - coverage run --source=getresults manage.py test
+  - coverage run --source=getresults_tx manage.py test
 
 after_success:
   - coveralls
