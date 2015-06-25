@@ -10,7 +10,7 @@
 from django.contrib import admin
 
 from .actions import update_on_sent_action, upload_audit_action, upload_unaudit_action, update_pending_files
-from .models import History, RemoteFolder, Upload, Pending
+from .models import History, RemoteFolder, Upload, Pending, Acknowledgment, LogReaderHistory
 
 
 class HistoryAdmin(admin.ModelAdmin):
@@ -18,11 +18,12 @@ class HistoryAdmin(admin.ModelAdmin):
     date_hierarchy = 'sent_datetime'
 
     list_display = ('filename', 'archive', 'filesize', 'filetimestamp',
-                    'sent_datetime', 'ack_datetime', 'mime_type',
+                    'sent_datetime', 'ack_datetime', 'ack_user', 'mime_type',
                     'remote_hostname', 'status', 'remote_folder_hint',
                     'remote_folder')
-    list_filter = ('status', 'sent_datetime', 'ack_datetime', 'remote_folder', 'remote_folder_hint')
-    search_fields = ('filename', )
+    list_filter = ('status', 'sent_datetime', 'acknowledged', 'ack_datetime',
+                   'remote_folder', 'remote_folder_hint', 'ack_user')
+    search_fields = ('filename', 'ack_user')
     actions = [update_pending_files, ]
 admin.site.register(History, HistoryAdmin)
 
@@ -35,7 +36,8 @@ admin.site.register(RemoteFolder, RemoteFolderAdmin)
 
 class UploadAdmin(admin.ModelAdmin):
     date_hierarchy = 'upload_datetime'
-    list_display = ('filename', 'upload_datetime', 'upload_user', 'sent', 'sent_datetime', 'audited', 'filesize', 'mime_type')
+    list_display = ('filename', 'upload_datetime', 'upload_user', 'sent', 'sent_datetime',
+                    'audited', 'filesize', 'mime_type')
     search_fields = ('file', 'description')
     list_filter = ('upload_datetime', 'sent', 'sent_datetime', 'audited_datetime', 'upload_user', 'auditor')
     search_fields = ('filename', )
@@ -56,3 +58,18 @@ class PendingAdmin(admin.ModelAdmin):
     search_fields = ('filename', )
     actions = [update_pending_files, ]
 admin.site.register(Pending, PendingAdmin)
+
+
+class AcknowledgmentAdmin(admin.ModelAdmin):
+    date_hierachy = 'ack_datetime'
+    list_display = ('filename', 'ack_user', 'ack_datetime', 'in_sent_history', 'created')
+    list_filter = ('in_sent_history', 'ack_datetime', 'created', 'ack_user')
+    search_fields = ('filename', 'ack_user')
+admin.site.register(Acknowledgment, AcknowledgmentAdmin)
+
+
+class LogReaderHistoryAdmin(admin.ModelAdmin):
+    date_hierachy = 'started'
+    list_display = ('lastpos', 'lines', 'matches', 'exceptions', 'started', 'ended')
+    list_filter = ('started', 'ended')
+admin.site.register(LogReaderHistory, LogReaderHistoryAdmin)

@@ -68,6 +68,11 @@ class History(models.Model):
 
     sent_datetime = models.DateTimeField()
 
+    acknowledged = models.BooleanField(
+        default=False,
+        blank=True,
+    )
+
     ack_datetime = models.DateTimeField(
         null=True,
         blank=True)
@@ -107,7 +112,7 @@ class RemoteFolder(models.Model):
 
     class Meta:
         app_label = 'getresults_tx'
-        unique_together = (('folder', 'base_path'), ('folder', 'folder_hint'))
+        unique_together = (('folder', 'base_path', 'label'), ('folder', 'folder_hint', 'label'))
         ordering = ('label', 'base_path', 'folder')
         verbose_name = 'Remote Folder Configuration'
 
@@ -202,10 +207,71 @@ class Pending(models.Model):
         verbose_name = 'Pending File'
         verbose_name_plural = 'Pending Files'
 
-# @receiver(post_save, weak=False, dispatch_uid="enrollment_checklist_on_post_save")
-# def update_mime_type_post_save(sender, instance, raw, created, using, **kwargs):
-#     if not raw:
-#         if isinstance(instance, Upload):
-#             f = instance.file.open()
-#             instance.mime_type = magic.from_file(f, mime=True)
-#             f.close()
+
+class Acknowledgment(models.Model):
+
+    filename = models.CharField(
+        max_length=50
+    )
+
+    ack_user = models.CharField(
+        max_length=50
+    )
+
+    ack_datetime = models.DateTimeField()
+
+    ack_string = models.TextField(
+        max_length=500
+    )
+
+    in_sent_history = models.BooleanField(
+        default=False,
+        help_text='True if ACK can be linked to sent history')
+
+    created = models.DateTimeField(
+        default=timezone.now
+    )
+
+    class Meta:
+        app_label = 'getresults_tx'
+        ordering = ('-ack_datetime', )
+
+
+class AcknowledgmentUser(models.Model):
+
+    ack_user = models.CharField(
+        max_length=50,
+        unique=True,
+    )
+
+    remote_folder = models.ForeignKey(RemoteFolder)
+
+    created = models.DateTimeField(
+        default=timezone.now
+    )
+
+    class Meta:
+        app_label = 'getresults_tx'
+        ordering = ('ack_user', )
+
+
+class LogReaderHistory(models.Model):
+
+    lastpos = models.IntegerField()
+
+    lines = models.IntegerField(default=0)
+
+    matches = models.IntegerField(default=0)
+
+    exceptions = models.IntegerField(default=0)
+
+    started = models.DateTimeField(
+        default=timezone.now
+    )
+
+    ended = models.DateTimeField(null=True)
+
+    class Meta:
+        app_label = 'getresults_tx'
+        ordering = ('-started', )
+        verbose_name_plural = 'Log Reader History'

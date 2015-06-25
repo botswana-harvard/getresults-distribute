@@ -135,7 +135,7 @@ class RemoteFolderEventHandler(BaseEventHandler):
         if mime_type in self.mime_types:
             folder_selection = self.select_destination_dir(filename, mime_type)
             if not folder_selection.path:
-                print('Copy failed. Unable to select remote folder for {}'.format(filename))
+                print('Copy failed. Unable to \'select\' remote folder for {}'.format(filename))
                 return None
             else:
                 with SCPClient(self.ssh.get_transport()) as scp:

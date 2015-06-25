@@ -149,15 +149,15 @@ MEDIA_ROOT = os.path.expanduser('~/getresults_files/')
 MEDIA_URL = '/media/'
 
 # local folders are relative to MEDIA_ROOT
-GRTX_REMOTE_HOSTNAME = '10.15.15.2'
-GRTX_REMOTE_USERNAME = 'bhsharvard'
-# GRTX_REMOTE_HOSTNAME = '192.168.1.84'
-# GRTX_REMOTE_USERNAME = 'erikvw'
+# GRTX_REMOTE_HOSTNAME = '10.15.15.2'
+# GRTX_REMOTE_USERNAME = 'bhsharvard'
+GRTX_REMOTE_HOSTNAME = 'localhost'
+GRTX_REMOTE_USERNAME = 'erikvw'
 # GRTX_REMOTE_HOSTNAME = 'edc4.bhp.org.bw'
-# GRTX_REMOTE_HOSTNAME = '192.168.1.22'
 # GRTX_REMOTE_USERNAME = 'erikvw'
 GRTX_UPLOAD_FOLDER = 'upload/'
 GRTX_REMOTE_FOLDER = '~/viral_load'
 GRTX_ARCHIVE_FOLDER = 'archive/'
 GRTX_FILE_PATTERNS = ['*.pdf']
 GRTX_MIME_TYPES = ['application/pdf']
+GRTX_REMOTE_LOGFILE = '/Users/erikvw/source/getresults-tx/getresults_tx/testdata/access.log'
