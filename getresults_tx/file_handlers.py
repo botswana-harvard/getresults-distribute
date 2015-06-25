@@ -9,6 +9,9 @@ from .constants import PDF
 
 class BaseFileHandler(object):
 
+    def __init__(self, **kwargs):
+        pass
+
     def process(self, *args):
         return True
 
@@ -27,8 +30,7 @@ class RegexPdfFileHandler(BaseFileHandler):
     """
     regex = None
 
-    def __init__(self, regex=None):
-        self.regex = regex or self.regex
+    def __init__(self, **kwargs):
         self.text = None
         self.match_string = None
 

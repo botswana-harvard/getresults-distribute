@@ -71,20 +71,9 @@ class Server(BaseEventHandler):
         :type mkdir_remote: boolean
         """
         super(Server, self).__init__(hostname, timeout, remote_user)
-        try:
-            self.event_handler = event_handler(hostname, timeout, remote_user)
-        except TypeError as e:
-            if 'object is not callable' in str(e):
-                self.event_handler = BaseEventHandler(hostname, timeout, remote_user)
-            else:
-                raise
-        try:
-            self.file_handler = file_handler()
-        except TypeError as e:
-            if 'object is not callable' in str(e):
-                self.file_handler = BaseFileHandler()
-            else:
-                raise
+        self.event_handler = self._handler(
+            event_handler, BaseEventHandler, hostname=hostname, timeout=timeout, remote_user=remote_user)
+        self.file_handler = self._handler(file_handler, BaseFileHandler)
         self.filename_max_length = 50
         self.hostname = hostname or 'localhost'
         self.trusted_host = True if (trusted_host or self.hostname == 'localhost') else False
@@ -115,6 +104,15 @@ class Server(BaseEventHandler):
 
     def __str__(self):
         return 'Server started on {}'.format(timezone.now())
+
+    def _handler(self, handler, base_handler, **kwargs):
+        try:
+            return handler(**kwargs)
+        except TypeError as e:
+            if 'object is not callable' in str(e):
+                return base_handler(**kwargs)
+            else:
+                raise
 
     def _wrapper(self, event_handler):
         event_handler.source_dir = self.source_dir

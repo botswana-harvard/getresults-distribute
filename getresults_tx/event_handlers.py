@@ -51,7 +51,7 @@ class BaseEventHandler(PatternMatchingEventHandler):
         super(BaseEventHandler, self).__init__(ignore_directories=True)
 
     def process(self, event):
-        print('{} {}'.format(event.event_type, event.src_path))
+        print('{} {} {}'.format(timezone.now(), event.event_type, event.src_path))
         print('Nothing to do.')
 
     def on_modified(self, event):
@@ -82,16 +82,16 @@ class BaseEventHandler(PatternMatchingEventHandler):
                     timeout=self.timeout,
                     compress=True,
                 )
-                print('Connected to host {}.'.format(self.hostname))
+                print('Connected to host {}. '.format(self.hostname))
                 break
             except socket.timeout:
                 print('Cannot connect to host {}. Retrying ...{}'.format(
-                    self.hostname, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                    self.hostname, timezone.now()))
                 time.sleep(5)
             except ConnectionRefusedError as e:
                 print('{} for {}@{} {}'.format(
                     str(e), self.remote_user, self.hostname,
-                    datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                    timezone.now()))
                 time.sleep(5)
             except AuthenticationException as e:
                 raise AuthenticationException(
@@ -128,7 +128,7 @@ class RemoteFolderEventHandler(BaseEventHandler):
             self.process_added(event)
 
     def process_added(self, event):
-        print('{} {}'.format(event.event_type, event.src_path))
+        print('{} {} {}'.format(timezone.now(), event.event_type, event.src_path))
         filename = event.src_path.split('/')[-1:][0]
         path = os.path.join(self.source_dir, filename)
         mime_type = magic.from_file(path, mime=True)
