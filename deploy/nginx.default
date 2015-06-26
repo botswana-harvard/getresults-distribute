@@ -1,0 +1,17 @@
+server { 
+    listen   8080; 
+    server_name  localhost;
+
+    access_log  /var/log/nginx/getresults.bhp.org.bw.access.log;  
+    error_log  /var/log/nginx/getresults.bhp.org.bw.error.log;   
+
+    location /static/ {  
+       autoindex on;  
+       root   /home/bcpp/source/getresults-distribute/getresults-dst;  
+    }
+
+     location /getresults_files/ {  
+       autoindex on;  
+       root   /home/bcpp/;  
+    }  
+ }   
