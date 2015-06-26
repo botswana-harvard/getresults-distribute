@@ -3,7 +3,7 @@
 [![Dependency Status](https://www.versioneye.com/user/projects/558a5b6e306662001e00032e/badge.svg?style=flat)](https://www.versioneye.com/user/projects/558a5b6e306662001e00032e)
 [![Coverage Status](https://coveralls.io/repos/botswana-harvard/getresults-tx/badge.svg)](https://coveralls.io/r/botswana-harvard/getresults-tx)
 
-# getresults-tx
+# getresults-distribute
 
 Move files from a folder on server A to a folder on server B. If that is all you want, use `rsync`.
 
