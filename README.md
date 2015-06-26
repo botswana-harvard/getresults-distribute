@@ -109,7 +109,34 @@ Migrate:
 	
 	python manage.py makemigrations getresults_tx
 	python manage.py migrate getresults_tx
-	
+
+Copy your ssh keys to the remote server:
+
+    ssh-copy-id erikvw@edc.sample.com
+
+Create your folders:
+
+    $ mkdir ~/getresults_files/upload
+    $ mkdir ~/getresults_files/archive
+    $ ssh erikvw@edc.sample.com
+    erikvw@edc.sample.com:~$ mkdir ~/viral_load
+
+Get access rights to read the apache access.log or some part of it.
+    
+    '/var/log/apache2/access.log'
+
+Start up django web server
+
+    python manage.py runserver 0.0.0.0
+
+Start the observer
+
+    python manage.py start_observer
+
+Start the log reader
+
+    python manage.py start_log_reader
+
 
 Folders
 -------
