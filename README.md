@@ -5,7 +5,7 @@
 
 # getresults-tx
 
-Move files from a folder on server A to a folder on server B. If that is all you want, use unix.
+Move files from a folder on server A to a folder on server B. If that is all you want, use `rsync`.
 
 We need accountability as well. This is our scenario:
 
