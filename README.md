@@ -9,13 +9,13 @@ Move files from a folder on server A to a folder on server B. If that is all you
 
 We need accountability as well. This is our scenario:
 
-# On behalf of us, the lab, `getresults_tx` moves uploaded clinical test results as PDFs to a folder
+* On behalf of us, the lab, `getresults_tx` moves uploaded clinical test results as PDFs to a folder
 on remote server B. On remote server B, the PDF files are collated according to clinic facility. A clinic facility accesses
 a secure web resource that serves up the files on server B, e.g. ownCloud or apache. Each clinic is granted access to
 their PDF clinical results only.
-# Lab technicians upload result PDFs through the Django interface. They also use the interface to confirm a file is sent.
-# Clinic staff access the file (download or view). 
-# `getresults_tx` contacts server B and scans the apache2 log for evidence that the file was accessed.
+*  Lab technicians upload result PDFs through the Django interface. They also use the interface to confirm a file is sent.
+*  Clinic staff access the file (download or view). 
+*  `getresults_tx` contacts server B and scans the apache2 log for evidence that the file was accessed.
 
 So in addition to just moving files, we keep a detailed and searchable audit trail of what is happening:
 * searchable history of uploaded files
