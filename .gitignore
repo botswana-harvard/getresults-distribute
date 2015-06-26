@@ -7,10 +7,10 @@ __pycache__/
 test-*
 db.sqlite3
 etc/*
-getresults_tx/testdata/inbox/
-getresults_tx/testdata/outbox/
-getresults_tx/testdata/archive/
-getresults_tx/testdata/viral_load/
+getresults_dst/testdata/inbox/
+getresults_dst/testdata/outbox/
+getresults_dst/testdata/archive/
+getresults_dst/testdata/viral_load/
 # C extensions
 *.so
 

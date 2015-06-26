@@ -86,7 +86,7 @@ class History(models.Model):
         max_length=50)
 
     class Meta:
-        app_label = 'getresults_tx'
+        app_label = 'getresults_dst'
         ordering = ('-sent_datetime', )
         verbose_name = 'Sent History'
         verbose_name_plural = 'Sent History'
@@ -111,7 +111,7 @@ class RemoteFolder(models.Model):
         blank=True)
 
     class Meta:
-        app_label = 'getresults_tx'
+        app_label = 'getresults_dst'
         unique_together = (('folder', 'base_path', 'label'), ('folder', 'folder_hint', 'label'))
         ordering = ('label', 'base_path', 'folder')
         verbose_name = 'Remote Folder Configuration'
@@ -183,7 +183,7 @@ class Upload(models.Model):
         super(Upload, self).save(*args, **kwargs)
 
     class Meta:
-        app_label = 'getresults_tx'
+        app_label = 'getresults_dst'
         ordering = ('-upload_datetime', )
 
 
@@ -202,7 +202,7 @@ class Pending(models.Model):
     filetimestamp = models.DateTimeField()
 
     class Meta:
-        app_label = 'getresults_tx'
+        app_label = 'getresults_dst'
         ordering = ('filename', )
         verbose_name = 'Pending File'
         verbose_name_plural = 'Pending Files'
@@ -233,7 +233,7 @@ class Acknowledgment(models.Model):
     )
 
     class Meta:
-        app_label = 'getresults_tx'
+        app_label = 'getresults_dst'
         ordering = ('-ack_datetime', )
 
 
@@ -251,7 +251,7 @@ class AcknowledgmentUser(models.Model):
     )
 
     class Meta:
-        app_label = 'getresults_tx'
+        app_label = 'getresults_dst'
         ordering = ('ack_user', )
 
 
@@ -272,6 +272,6 @@ class LogReaderHistory(models.Model):
     ended = models.DateTimeField(null=True)
 
     class Meta:
-        app_label = 'getresults_tx'
+        app_label = 'getresults_dst'
         ordering = ('-started', )
         verbose_name_plural = 'Log Reader History'

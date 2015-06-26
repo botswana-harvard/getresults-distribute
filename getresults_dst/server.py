@@ -12,12 +12,11 @@ import os
 import time
 
 from django.utils import timezone
-from paramiko import SFTPClient
+from paramiko import SFTPClient, SSHClient
 from watchdog.observers import Observer
 
 from .event_handlers import BaseEventHandler
 from .file_handlers import BaseFileHandler
-from paramiko.client import SSHClient
 
 
 def touch(fname, mode=0o666, dir_fd=None, **kwargs):

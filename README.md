@@ -1,19 +1,19 @@
-[![Build Status](https://travis-ci.org/botswana-harvard/getresults-tx.svg)](https://travis-ci.org/botswana-harvard/getresults-tx)
-[![Code Health](https://landscape.io/github/botswana-harvard/getresults-tx/develop/landscape.svg?style=flat)](https://landscape.io/github/botswana-harvard/getresults-tx/develop)
+[![Build Status](https://travis-ci.org/botswana-harvard/getresults-distribute.svg)](https://travis-ci.org/botswana-harvard/getresults-distribute)
+[![Code Health](https://landscape.io/github/botswana-harvard/getresults-distribute/develop/landscape.svg?style=flat)](https://landscape.io/github/botswana-harvard/getresults-distribute/develop)
 [![Dependency Status](https://www.versioneye.com/user/projects/558a5b6e306662001e00032e/badge.svg?style=flat)](https://www.versioneye.com/user/projects/558a5b6e306662001e00032e)
-[![Coverage Status](https://coveralls.io/repos/botswana-harvard/getresults-tx/badge.svg)](https://coveralls.io/r/botswana-harvard/getresults-tx)
+[![Coverage Status](https://coveralls.io/repos/botswana-harvard/getresults-distribute/badge.svg)](https://coveralls.io/r/botswana-harvard/getresults-distribute)
 
 # getresults-distribute
 
 Move files from a folder on server A to a folder on server B. If that is all you want, use `rsync`.
 
-We need accountability as well. This is our scenario:
+We need accountability and management as well. This is our scenario:
 
 * Our lab technicians upload result PDFs through the Django interface.
-* `getresults_tx.server` moves and collates the uploaded clinical test results to a set of folders on remote server B. The PDF files are collated according to clinic facility (folder). A secure web resource serves up the PDF files on remote server B, e.g. ownCloud or apache, where each clinic is granted access to their PDF clinical results only.
+* `getresults_dst.server` moves and collates the uploaded clinical test results to a set of folders on remote server B. The PDF files are collated according to clinic facility (folder). A secure web resource serves up the PDF files on remote server B, e.g. ownCloud or apache, where each clinic is granted access to their PDF clinical results only.
 * Our lab technicians check their work by confirming uploaded files were sent.
 * The clinic staff access their files (download or view) from their facility. 
-* `getresults_tx` contacts remote server B and scans the apache2 log for evidence that the files were accessed by the clinic.
+* `getresults_dst` contacts remote server B and scans the apache2 log for evidence that the files were accessed by the clinic.
 
 We need to know that the clinic received the result. So in addition to just moving files, a detailed and searchable audit trail of what is happening is kept:
 * searchable history of uploaded files
@@ -66,16 +66,16 @@ Create your django project.
 
 	django-admin startproject project
 
-Install getresults-tx
+Install getresults-distribute
 	
-	pip install -e git+https://github.com/botswana-harvard/getresults-tx@develop#g=getresults_tx
+	pip install -e git+https://github.com/botswana-harvard/getresults-distribute@develop#g=getresults_dst
 
 Add to `settings.py`:
 
 	INSTALLED_APPS = (
 	    ...
 	    ...
-	    'getresults_tx',
+	    'getresults_dst',
 	    'project',
 	)
 
@@ -107,8 +107,8 @@ Choose your database:
 
 Migrate:
 	
-	python manage.py makemigrations getresults_tx
-	python manage.py migrate getresults_tx
+	python manage.py makemigrations getresults_dst
+	python manage.py migrate getresults_dst
 
 Copy your ssh keys to the remote server:
 
@@ -162,13 +162,13 @@ For example:
 
     import pwd
     
-    from getresults_tx.server import Server
-    from getresults_tx.event_handlers import RemoteFolderEventHandler
-    from getresults_tx.folder_handlers import FolderHandler
+    from getresults_dst.server import Server
+    from getresults_dst.event_handlers import RemoteFolderEventHandler
+    from getresults_dst.folder_handlers import FolderHandler
     
-    source_dir = '~/source/getresults-tx/getresults_tx/testdata/inbox/'
-    destination_dir = '~/source/getresults-tx/getresults_tx/testdata/viral_load/'
-    archive_dir = '~/source/getresults-tx/getresults_tx/testdata/archive/'
+    source_dir = '~/source/getresults-distribute/getresults_dst/testdata/inbox/'
+    destination_dir = '~/source/getresults-distribute/getresults_dst/testdata/viral_load/'
+    archive_dir = '~/source/getresults-distribute/getresults_dst/testdata/archive/'
     
     RemoteFolderEventHandler.folder_handler=FolderHandler()
     remote_user = pwd.getpwuid(os.getuid()).pw_name
@@ -214,7 +214,7 @@ The log reader uses `apache_log_parser` to parse a local or remote apache log. S
 
 	#!/bin/bash
 	. ~/.virtualenvs/django18/bin/activate
-	cd ~/source/getresults-tx
+	cd ~/source/getresults-distribute
 	python manage.py start_log_reader
 	. ~/.virtualenvs/django18/bin/deactivate
 	exit 0

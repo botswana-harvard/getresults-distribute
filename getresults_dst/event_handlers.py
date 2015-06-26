@@ -9,8 +9,8 @@
 
 import magic
 import os
-import pytz
 import pwd
+import pytz
 import random
 import socket
 import string

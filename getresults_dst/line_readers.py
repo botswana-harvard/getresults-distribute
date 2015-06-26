@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2015 Erik van Widenfelt
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 import pytz
 import re
 import sys
@@ -5,7 +14,7 @@ import sys
 from apache_log_parser import make_parser, LineDoesntMatchException
 from dateutil.parser import parse
 from django.conf import settings
-from getresults_tx.models import Acknowledgment, History
+from getresults_dst.models import Acknowledgment, History
 
 tz = pytz.timezone(settings.TIME_ZONE)
 

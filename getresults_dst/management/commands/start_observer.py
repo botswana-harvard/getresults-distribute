@@ -15,9 +15,9 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from paramiko import SSHException
 
-from getresults_tx.server import Server
-from getresults_tx.event_handlers import RemoteFolderEventHandler
-from getresults_tx.file_handlers import RegexPdfFileHandler
+from getresults_dst.event_handlers import RemoteFolderEventHandler
+from getresults_dst.file_handlers import RegexPdfFileHandler
+from getresults_dst.server import Server
 
 
 class Command(BaseCommand):

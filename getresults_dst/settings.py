@@ -47,7 +47,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'getresults_tx',
+    'getresults_dst',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -61,7 +61,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.security.SecurityMiddleware',
 )
 
-ROOT_URLCONF = 'getresults_tx.urls'
+ROOT_URLCONF = 'getresults_dst.urls'
 
 TEMPLATES = [
     {
@@ -81,7 +81,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'getresults_tx.wsgi.application'
+WSGI_APPLICATION = 'getresults_dst.wsgi.application'
 
 
 # Database
@@ -156,4 +156,4 @@ GRTX_REMOTE_FOLDER = '~/viral_load'
 GRTX_ARCHIVE_FOLDER = 'archive/'
 GRTX_FILE_PATTERNS = ['*.pdf']
 GRTX_MIME_TYPES = ['application/pdf']
-GRTX_REMOTE_LOGFILE = '/Users/erikvw/source/getresults-tx/getresults_tx/testdata/access.log'
+GRTX_REMOTE_LOGFILE = '/Users/erikvw/source/getresults-tx/getresults_dst/testdata/access.log'
