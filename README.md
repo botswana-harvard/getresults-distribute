@@ -125,6 +125,10 @@ Get access rights to read the apache access.log or some part of it.
     
     '/var/log/apache2/access.log'
 
+Load the list of remote folders
+
+    python manage.py load_remote_folders
+
 Start up django web server
 
     python manage.py runserver 0.0.0.0
