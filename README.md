@@ -5,6 +5,24 @@
 
 # getresults-tx
 
+Move files from a folder on server A to a folder on server B. If that is all you want, use unix.
+
+We need accountability as well. This is our scenario:
+
+# On behalf of us, the lab, `getresults_tx` moves uploaded clinical test results as PDFs to a folder
+on remote server B. On remote server B, the PDF files are collated according to clinic facility. A clinic facility accesses
+a secure web resource that serves up the files on server B, e.g. ownCloud or apache. Each clinic is granted access to
+their PDF clinical results only.
+# Lab technicians upload result PDFs through the Django interface. They also use the interface to confirm a file is sent.
+# Clinic staff access the file (download or view). 
+# `getresults_tx` contacts server B and scans the apache2 log for evidence that the file was accessed.
+
+So in addition to just moving files, we keep a detailed and searchable audit trail of what is happening:
+* searchable history of uploaded files
+* searchable history of successfully sent files
+* list of files uploaded but not sent (pending files)
+* history of file access on server B (acknowledgments)
+
 Requires python3. Django 1.7 or 1.8.
 
 	>>> python manage.py start_observer
@@ -76,10 +94,12 @@ Add to `settings.py`:
 
 	# remote folder, if relative, will be expanded 
 	GRTX_REMOTE_FOLDER = '~/viral_load'
+	GRTX_REMOTE_LOGFILE = '/var/log/apache2/access.log'
 
 	# must specify both the pattern and mime type
 	GRTX_FILE_PATTERNS = ['*.pdf']
 	GRTX_MIME_TYPES = ['application/pdf']
+	
 
 Choose your database:
 
@@ -159,6 +179,19 @@ is a clinical test result. The PDF filenames are either a `specimen_identifier` 
 values must appear somewhere in the clinical test result. By checking the text we minimize the chance of
 sending an incorrectly named PDF file.
     
+    
+Log Reader
+----------
+
+The log reader uses `apache_log_parser` to parse a local or remote apache log. See the management command `start_log_reader`.
+
+Line Readers
+------------
+A line reader is passed to the log reader and call per line. The `RegexApacheLineReader` reads a line looking for
+evidence that a previously sent file was accessed. If a match is found, the `Acknowledgement` model and the `History`
+models are updated. 
+
+
 SSH/SCP
 -------
 
