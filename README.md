@@ -181,12 +181,18 @@ sending an incorrectly named PDF file.
 Log Reader
 ----------
 
-The log reader uses `apache_log_parser` to parse a local or remote apache log. See the management command `start_log_reader`.
+The log reader uses `apache_log_parser` to parse a local or remote apache log. See the management command `start_log_reader`. We put this in a cron job. On the next parse event, the log reader starts where it left off (`lastpos`).
+
+	#!/bin/bash
+	. ~/.virtualenvs/django18/bin/activate
+	cd ~/source/getresults-tx
+	python manage.py start_log_reader
+	. ~/.virtualenvs/django18/bin/deactivate
+	exit 0
 
 Line Readers
 ------------
-A line reader is passed to the log reader and call per line. The `RegexApacheLineReader` reads a line looking for
-evidence that a previously sent file was accessed. If a match is found, the `Acknowledgement` model and the `History`
+A line reader is passed to the log reader and called per line. For example, the `RegexApacheLineReader` reads a line looking for evidence that a previously sent file was accessed. If a match is found, the `Acknowledgement` model and the `History`
 models are updated. 
 
 
