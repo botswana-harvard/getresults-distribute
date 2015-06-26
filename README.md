@@ -20,6 +20,7 @@ We need to know that the clinic received the result. So in addition to just movi
 * searchable history of successfully sent files
 * list of files uploaded but not sent (pending files)
 * history of file access on server B (acknowledgments)
+* full archive of all files sent where each file is viewable through the django interface.
 
 Requires python3. Django 1.7 or 1.8.
 
