@@ -88,10 +88,10 @@ WSGI_APPLICATION = 'getresults_tx.wsgi.application'
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
 DATABASES = {
-   'default': {
-       'ENGINE': 'django.db.backends.sqlite3',
-       'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-   }
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
 }
 
 # DATABASES = {
@@ -149,12 +149,8 @@ MEDIA_ROOT = os.path.expanduser('~/getresults_files/')
 MEDIA_URL = '/media/'
 
 # local folders are relative to MEDIA_ROOT
-# GRTX_REMOTE_HOSTNAME = '10.15.15.2'
-# GRTX_REMOTE_USERNAME = 'bhsharvard'
 GRTX_REMOTE_HOSTNAME = 'localhost'
 GRTX_REMOTE_USERNAME = 'erikvw'
-# GRTX_REMOTE_HOSTNAME = 'edc4.bhp.org.bw'
-# GRTX_REMOTE_USERNAME = 'erikvw'
 GRTX_UPLOAD_FOLDER = 'upload/'
 GRTX_REMOTE_FOLDER = '~/viral_load'
 GRTX_ARCHIVE_FOLDER = 'archive/'
