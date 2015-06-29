@@ -5,7 +5,7 @@
 
 # getresults-distribute
 
-Move files from a folder on server A to a folder on server B. If that is all you want, use `rsync`.
+Move files from a folder on server A to a folder on server B. If that's all you want, use `rsync`, otherwise read on.
 
 We need accountability and management as well. This is our scenario:
 
