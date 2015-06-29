@@ -21,17 +21,17 @@ class HistoryAdmin(admin.ModelAdmin):
 
     list_display = ('filename', 'archive', 'filesize', 'filetimestamp',
                     'sent_datetime', 'ack_datetime', 'ack_user', 'mime_type',
-                    'remote_hostname', 'remote_folder_hint',
+                    'remote_hostname', 'remote_folder_tag',
                     'remote_folder')
     list_filter = ('sent_datetime', 'acknowledged', 'ack_datetime',
-                   'remote_folder', 'remote_folder_hint', 'ack_user')
+                   'remote_folder', 'remote_folder_tag', 'ack_user')
     search_fields = ('filename', 'ack_user')
     actions = [update_pending_files, unacknowledge_action]
 admin.site.register(History, HistoryAdmin)
 
 
 class RemoteFolderAdmin(admin.ModelAdmin):
-    list_display = ('folder', 'label', 'folder_hint', 'base_path')
+    list_display = ('folder', 'label', 'folder_tag', 'base_path')
     list_filter = ('label', 'base_path')
 admin.site.register(RemoteFolder, RemoteFolderAdmin)
 

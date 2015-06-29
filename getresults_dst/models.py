@@ -43,10 +43,10 @@ class History(models.Model):
         max_length=25,
         default='default')
 
-    remote_folder_hint = models.CharField(
+    remote_folder_tag = models.CharField(
         max_length=10,
         null=True,
-        help_text='if filename is suggestive of the remote folder ...')
+        help_text='e.g. a value in the filename suggestive of the remote folder ...')
 
     archive_path = models.CharField(
         max_length=100,
@@ -100,19 +100,19 @@ class RemoteFolder(models.Model):
     base_path = models.CharField(
         max_length=200)
 
-    folder_hint = models.CharField(
+    folder_tag = models.CharField(
         max_length=25,
         default=None,
         blank=True)
 
     label = models.CharField(
         max_length=10,
-        null=True,
-        blank=True)
+        default='default',
+        help_text='key value in folder_tags dictionary.')
 
     class Meta:
         app_label = 'getresults_dst'
-        unique_together = (('folder', 'base_path', 'label'), ('folder', 'folder_hint', 'label'))
+        unique_together = (('folder', 'base_path', 'label'), ('folder', 'folder_tag', 'label'))
         ordering = ('label', 'base_path', 'folder')
         verbose_name = 'Remote Folder Configuration'
 

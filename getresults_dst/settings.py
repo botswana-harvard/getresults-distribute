@@ -134,8 +134,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR.child('static')
-
+# STATIC_ROOT = BASE_DIR.child('static')
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "static"),
+)
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
@@ -145,7 +147,7 @@ STATICFILES_FINDERS = (
 )
 
 GIT_DIR = BASE_DIR.ancestor(1)
-MEDIA_ROOT = os.path.expanduser('~/getresults_files/')
+MEDIA_ROOT = os.path.expanduser('~/source/getresults-distribute/getresults_dst/testdata')
 MEDIA_URL = '/media/'
 
 # local folders are relative to MEDIA_ROOT

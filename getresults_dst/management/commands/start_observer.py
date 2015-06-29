@@ -15,8 +15,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from paramiko import SSHException
 
-from getresults_dst.event_handlers import RemoteFolderEventHandler
-from getresults_dst.file_handlers import RegexPdfFileHandler
+from getresults_dst.getresults import GrRemoteFolderEventHandler, GrBhsFileHandler
 from getresults_dst.server import Server
 
 
@@ -30,11 +29,10 @@ class Command(BaseCommand):
         archive_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_ARCHIVE_FOLDER)
         file_patterns = settings.GRTX_FILE_PATTERNS
         mime_types = settings.GRTX_MIME_TYPES
-        RegexPdfFileHandler.regex = r'066\-[0-9]{8}\-[0-9]{1}'
         try:
             server = Server(
-                RemoteFolderEventHandler,
-                file_handler=RegexPdfFileHandler,
+                GrRemoteFolderEventHandler,
+                file_handler=GrBhsFileHandler,
                 hostname=hostname,
                 trusted_host=True,
                 source_dir=source_dir,
@@ -43,15 +41,16 @@ class Command(BaseCommand):
                 file_patterns=file_patterns,
                 mime_types=mime_types,
                 touch_existing=True,
-                mkdir_remote=True)
+                mkdir_destination=True)
         except (ConnectionResetError, SSHException, ConnectionRefusedError, socket.gaierror) as e:
             raise CommandError(str(e))
         sys.stdout.write('\n' + str(server) + '\n')
-        sys.stdout.write('patterns: {}\n'.format(','.join([x for x in server.file_patterns])))
-        sys.stdout.write('mime: {}\n'.format(','.join([x.decode() for x in server.mime_types])))
-        sys.stdout.write('Upload folder: {}\n'.format(server.source_dir))
+        sys.stdout.write('patterns: {}\n'.format(','.join([x for x in server.event_handler.file_patterns])))
+        sys.stdout.write('mime: {}\n'.format(','.join([x.decode() for x in server.event_handler.mime_types])))
+        sys.stdout.write('Upload folder: {}\n'.format(server.event_handler.source_dir))
         sys.stdout.write(
-            'Remote folder: {}@{}:{}\n'.format(server.remote_user, server.hostname, server.destination_dir))
-        sys.stdout.write('Archive folder: {}\n'.format(server.archive_dir))
+            'Remote folder: {}@{}:{}\n'.format(
+                server.event_handler.remote_user, server.event_handler.hostname, server.event_handler.destination_dir))
+        sys.stdout.write('Archive folder: {}\n'.format(server.event_handler.archive_dir))
         sys.stdout.write('\npress CTRL-C to stop.\n\n')
         server.observe()

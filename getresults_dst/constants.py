@@ -8,3 +8,4 @@
 #
 
 PDF = b'application/pdf'
+TEXT = b'text/plain'

@@ -8,10 +8,11 @@
 #
 
 import os
-import re
 
-from .constants import PDF
+from datetime import datetime
+
 from .models import RemoteFolder
+from getresults_dst.constants import PDF, TEXT
 
 
 class FolderHandlerError(Exception):
@@ -19,18 +20,18 @@ class FolderHandlerError(Exception):
 
 
 class FolderSelection(object):
+    """A class of the attributes of the folder to be returned to the event handler."""
 
-    def __init__(self, name, path, hint, label):
-        self.name = name
+    def __init__(self, folder_name, full_path, tag):
+        self.name = folder_name
         try:
-            self.path = os.path.expanduser(path)
+            self.path = os.path.expanduser(full_path)
         except AttributeError:
             self.path = None
-        self.hint = hint
-        self.label = label
+        self.tag = tag
 
     def __repr__(self):
-        return '{}({}, {}, {})'.format(self.__class__.__name__, self.name, self.hint, self.label)
+        return '{}({}, {}, {})'.format(self.__class__.__name__, self.name, self.tag)
 
     def __str__(self):
         return self.name
@@ -38,91 +39,96 @@ class FolderSelection(object):
 
 class BaseFolderHandler(object):
 
+    folder_selection = FolderSelection
+
     def select(self, instance, filename, mime_type, base_path):
-        """ Selects the remote folder uas returned by method :func:`folder_hint`.
+        """Called by the event handler."""
+        folder_name, full_path, tag = self.select_folder(instance, filename, mime_type, base_path)
+        return self.folder_selection(folder_name, full_path, tag)
+
+    def select_folder(self, instance, filename, mime_type, base_path):
+        """Override to select a folder"""
+        folder_name, full_path, tag = 'folder', os.path.join(base_path, 'folder'), None
+        return folder_name, full_path, tag
+
+
+class MimeTypeFolderHandler(BaseFolderHandler):
+
+    def select_folder(self, instance, filename, mime_type, base_path):
+        """Select a folder based on the mime_type"""
+        if mime_type == PDF:
+            folder_name, tag = PDF, PDF
+        elif mime_type == TEXT:
+            folder_name, tag = TEXT, TEXT
+        else:
+            folder_name, tag = 'unknown', 'unknown'
+        full_path = os.path.join(base_path, folder_name)
+        return folder_name, full_path, tag
+
+
+class DayFolderHandler(BaseFolderHandler):
+
+    def select_folder(self, instance, filename, mime_type, base_path):
+        """Select a folder based on today's date."""
+        folder_name = datetime.today().strftime('%Y%m%d')
+        full_path = os.path.join(base_path, folder_name)
+        tag = datetime.today().strftime('%w')
+        return folder_name, full_path, tag
+
+
+class BaseLookupFolderHandler(BaseFolderHandler):
+
+    def select_folder(self, event_handler, filename, mime_type, base_path):
+        """ Looks up the remote folder in model RemoteFolder using the tag, returned by
+        :func:`folder_tag_func`, base_path and label.
 
         Folder name must be known to model RemoteFolder.
 
-        :param instance: instance of BaseDispatcher
+        :param event_handler: instance of BaseEventHandler
         :param filename: filename without path.
         :param mime_type: mime_type as determined by magic.
-        :param base_path: base path and in this case server.destination_dir
-        :returns returns a tuple of remote folder name (@type:str)and the folder_hint used
-                 where folder_hint is a tuple of (label (@type: str), folder_hint (@type: str)).
+        :param base_path: base path, e.g server.destination_dir
         """
-        remote_folder_path = None
-        for label, folder_hint in self.folder_hints.items():
+        full_path = None
+        for label, folder_tag_func in self.folder_tags.items():
             try:
-                folder_hint = folder_hint(filename, mime_type)
-                obj = RemoteFolder.objects.get(
+                try:
+                    tag = folder_tag_func(filename, mime_type)
+                except TypeError as e:
+                    if 'object is not callable' in str(e):
+                        tag = folder_tag_func
+                    else:
+                        raise
+                folder_name = RemoteFolder.objects.get(
                     base_path=base_path.split('/')[-1:][0],
-                    folder_hint=folder_hint,
-                    label=label or None,
-                )
-                remote_folder_name = obj.folder
-                remote_folder_path = instance.remote_folder(
-                    os.path.join(base_path, remote_folder_name),
-                    mkdir_remote=instance.mkdir_remote)
+                    folder_tag=tag,
+                    label=label).folder
+                full_path = event_handler.check_destination_path(
+                    os.path.join(base_path, folder_name),
+                    mkdir_destination=event_handler.mkdir_destination)
                 break
             except (RemoteFolder.DoesNotExist, FileNotFoundError):
                 pass
-        if not remote_folder_path:
-            remote_folder_name = None
-            remote_folder_path = None
-            label, folder_hint = None, None
-        folder_selection = FolderSelection(remote_folder_name, remote_folder_path, folder_hint, label)
-        return folder_selection
+        if not full_path:
+            folder_name = None
+            full_path = None
+            tag = None
+        return folder_name, full_path, tag
 
     @property
-    def folder_hints(self):
-        """Returns a dictionary of {label: folder_hint_method} where label is the value of
-        the attr on model RemoteFolder."""
-        return {'': self.folder_hint}
+    def folder_tags(self):
+        """Override to return a dictionary of {label: folder_tag_func} where label is the value of
+        the attr on model RemoteFolder.
 
-    def folder_hint(self, filename, mime_type):
-        return mime_type
+        There should be one item per folder tag in RemoteFolder.
 
+        See getresults.folder_handlers for an example."""
+        return {'default': self.folder_tag_func}
 
-class FolderHandler(BaseFolderHandler):
-    """A folder handler whose folder hints use regular expressions.
+    def folder_tag_func(self, filename, mime_type):
+        """Override to return a folder tag that will be used to query against RemoteFolder.
 
-    The folder_hint and label are used to query model RemoteFolder
-    for the correct folder name.
-    """
-    def __init__(self):
-        for label in self.folder_hints:
-            if not RemoteFolder.objects.filter(label=label).exists():
-                raise FolderHandlerError(
-                    'Remote folder label \'{}\' does not exist in model RemoteFolder.'.format(label))
-
-    @property
-    def folder_hints(self):
-        return {
-            'bhs': self.bhs_folder_hint,
-            'cdc1': self.cdc1_folder_hint,
-            'cdc2': self.cdc2_folder_hint,
-        }
-
-    def bhs_folder_hint(self, filename, mime_type):
-        """Returns a 2 digit code extracted from f if f matches the pattern,
-        otherwise returns None."""
-        pattern = re.compile(r'^066\-[0-9]{8}\-[0-9]{1}')
-        if mime_type == PDF and re.match(pattern, filename):
-            return filename[4:6]
-        return None
-
-    def cdc1_folder_hint(self, filename, mime_type):
-        """Returns a 2 digit code extracted from f if f matches the pattern,
-        otherwise returns None."""
-        pattern = re.compile(r'^[123]{1}[0-9]{2}\-[0-9]{4}')
-        if mime_type == PDF and re.match(pattern, filename):
-            return filename[1:3]
-        return None
-
-    def cdc2_folder_hint(self, filename, mime_type):
-        """Returns a 2 digit code extracted from f if f matches the pattern,
-        otherwise returns None."""
-        pattern = re.compile(r'^[0-9]{2}\-[0-9]{3}\-[0-9]{2}\-[0-9]{2}')
-        if mime_type == PDF and re.match(pattern, filename):
-            return filename[3:5]
-        return None
+        You will define as many of these methods as are added to the folder_tags dictionary.
+        """
+        folder_tag = 'default'
+        return folder_tag
