@@ -38,6 +38,7 @@ admin.site.register(RemoteFolder, RemoteFolderAdmin)
 
 class UploadAdmin(admin.ModelAdmin):
     date_hierarchy = 'upload_datetime'
+    fields = ('file', )
     list_display = ('filename', 'upload_datetime', 'upload_user', 'sent', 'sent_datetime',
                     'audited', 'filesize', 'mime_type')
     search_fields = ('file', 'description')
