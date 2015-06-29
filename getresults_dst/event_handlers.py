@@ -17,6 +17,7 @@ import socket
 import string
 import time
 
+from builtins import IsADirectoryError, FileNotFoundError, ConnectionRefusedError, ConnectionResetError
 from datetime import datetime
 from paramiko import AutoAddPolicy, SFTPClient, SSHClient
 from paramiko.ssh_exception import BadHostKeyException, AuthenticationException, SSHException

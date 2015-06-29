@@ -38,13 +38,19 @@ admin.site.register(RemoteFolder, RemoteFolderAdmin)
 
 class UploadAdmin(admin.ModelAdmin):
     date_hierarchy = 'upload_datetime'
-    fields = ('file', )
+    fields = ('file', 'filename', 'upload_datetime', )
+    readonly_fields = ('filename', 'upload_datetime', )
     list_display = ('filename', 'upload_datetime', 'upload_user', 'sent', 'sent_datetime',
                     'audited', 'filesize', 'mime_type')
     search_fields = ('file', 'description')
     list_filter = ('upload_datetime', 'sent', 'sent_datetime', 'audited_datetime', 'upload_user', 'auditor')
     search_fields = ('filename', )
     actions = [update_on_sent_action, upload_audit_action, upload_unaudit_action, update_pending_files]
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ('file', )
+        return self.readonly_fields
 
     def save_model(self, request, obj, form, change):
         if not change:

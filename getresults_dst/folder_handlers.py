@@ -9,10 +9,11 @@
 
 import os
 
+from builtins import FileNotFoundError
 from datetime import datetime
 
+from .constants import PDF, TEXT
 from .models import RemoteFolder
-from getresults_dst.constants import PDF, TEXT
 
 
 class FolderHandlerError(Exception):
@@ -31,7 +32,7 @@ class FolderSelection(object):
         self.tag = tag
 
     def __repr__(self):
-        return '{}({}, {}, {})'.format(self.__class__.__name__, self.name, self.tag)
+        return '{}({} {})'.format(self.__class__.__name__, self.name, self.tag)
 
     def __str__(self):
         return self.name

@@ -11,6 +11,7 @@ import os
 import socket
 import sys
 
+from builtins import ConnectionResetError, ConnectionRefusedError
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from paramiko import SSHException
