@@ -24,6 +24,8 @@ before_script:
   - eval $(ssh-agent)
   - ssh-add
 script: 
+  - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/inbox/
+  - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/archive/
   - coverage run --source=getresults_dst manage.py test
 
 after_success:
