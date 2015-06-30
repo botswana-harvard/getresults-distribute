@@ -27,6 +27,7 @@ script:
   - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/inbox/
   - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/inbox/archive/
   - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/archive/
+  - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/outbox
   - coverage run --source=getresults_dst manage.py test
 
 after_success:
