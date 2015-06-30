@@ -45,15 +45,16 @@ Look at the management command code but a very simple example is:
     archive_dir = os.path.join('~/getresult/archive')
     destination_dir = os.path.join(~/getresults')
     
-    server = Server(
+    event_handler = SomeEventHandler(
 		hostname='edc.example.com',
         source_dir=source_dir,
         destination_dir=destination_dir,
         archive_dir=archive_dir,
         mime_types=['application/pdf'],
         file_patterns=['*.pdf'],
-        touch_existing=True,
-        )
+        touch_existing=True)
+    
+    server = Server(event_handler)
     server.observe()
 
 The server events are the `watchdog` events, namely; `on_created()`, `on_modifier()`, `on_moved()` and `on_deleted()`.
@@ -176,11 +177,8 @@ For example:
     destination_dir = '~/source/getresults-distribute/getresults_dst/testdata/viral_load/'
     archive_dir = '~/source/getresults-distribute/getresults_dst/testdata/archive/'
     
-    RemoteFolderEventHandler.folder_handler=FolderHandler()
-    remote_user = pwd.getpwuid(os.getuid()).pw_name
-    
-    server = Server(
-        RemoteFolderEventHandler,
+    event_handler = RemoteFolderEventHandler(
+		folder_handler=FolderHandler,    
         hostname='localhost',
         remote_user=remote_user,
         source_dir=source_dir,
@@ -190,6 +188,7 @@ For example:
         file_patterns=['*.pdf'],
         touch_existing=True,
         mkdir_remote=True)
+    server = Server(event_handler)
     server.observe()
 
 Folder Handlers

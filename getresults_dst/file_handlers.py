@@ -42,6 +42,7 @@ class RegexPdfFileHandler(BaseFileHandler):
     def __init__(self, **kwargs):
         self.text = None
         self.match_string = None
+        super(RegexPdfFileHandler, self).__init__(**kwargs)
 
     def process(self, path, filename, mime_type):
         pattern = re.compile(self.regex)

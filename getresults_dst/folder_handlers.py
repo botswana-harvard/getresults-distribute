@@ -23,7 +23,7 @@ class FolderHandlerError(Exception):
 class FolderSelection(object):
     """A class of the attributes of the folder to be returned to the event handler."""
 
-    def __init__(self, folder_name, full_path, tag):
+    def __init__(self, folder_name=None, full_path=None, tag=None):
         self.name = folder_name
         try:
             self.path = os.path.expanduser(full_path)

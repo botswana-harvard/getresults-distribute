@@ -17,6 +17,7 @@ from reportlab.pdfgen import canvas
 from getresults_dst.getresults import GrRemoteFolderEventHandler
 from getresults_dst.server import Server
 from getresults_dst.utils import load_remote_folders_from_csv
+from paramiko.client import SSHClient
 
 
 class TestGetresults(TestCase):
@@ -44,20 +45,23 @@ class TestGetresults(TestCase):
         load_remote_folders_from_csv()
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '066-12000001-3.pdf'
         self.create_temp_pdf(os.path.join(source_dir, filename))
         self.assertEqual(magic.from_file(os.path.join(source_dir, filename), mime=True), b'application/pdf')
-        server = Server(
-            event_handler=GrRemoteFolderEventHandler,
+        event_handler = GrRemoteFolderEventHandler(
             source_dir=source_dir,
             destination_dir=destination_dir,
             archive_dir=archive_dir,
             file_patterns=['*.pdf'],
             mime_types=['application/pdf'],
             mkdir_destination=True)
-        folder_selection = server.event_handler.folder_handler.select(
-            server.event_handler, filename, b'application/pdf', server.event_handler.destination_dir)
+        server = Server(event_handler)
+        with SSHClient() as event_handler.ssh:
+            event_handler.connect()
+            folder_selection = server.event_handler.folder_handler.select(
+                server.event_handler, filename, b'application/pdf',
+                server.event_handler.destination_dir)
         self.assertEquals(folder_selection.name, 'digawana')
         self.assertEquals(folder_selection.path, os.path.join(server.event_handler.destination_dir, 'digawana'))
         self.assertEquals(folder_selection.tag, '12')
@@ -74,7 +78,7 @@ class TestGetresults(TestCase):
         load_remote_folders_from_csv()
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         remote_folder = os.path.join(destination_dir, 'digawana')
         try:
             os.makedirs(remote_folder)
@@ -83,16 +87,18 @@ class TestGetresults(TestCase):
         filename = '066-12000001-3.pdf'
         self.create_temp_pdf(os.path.join(source_dir, filename))
         self.assertEqual(magic.from_file(os.path.join(source_dir, filename), mime=True), b'application/pdf')
-        server = Server(
-            event_handler=GrRemoteFolderEventHandler,
+        event_handler = GrRemoteFolderEventHandler(
             source_dir=source_dir,
             destination_dir=destination_dir,
             archive_dir=archive_dir,
             file_patterns=['*.pdf'],
             mime_types=['application/pdf'],
             mkdir_destination=False)
-        folder_selection = server.event_handler.folder_handler.select(
-            server.event_handler, filename, b'application/pdf', server.event_handler.destination_dir)
+        server = Server(event_handler)
+        with SSHClient() as event_handler.ssh:
+            event_handler.connect()
+            folder_selection = server.event_handler.folder_handler.select(
+                server.event_handler, filename, b'application/pdf', server.event_handler.destination_dir)
         self.assertEquals(folder_selection.name, 'digawana')
         self.assertEquals(folder_selection.path, os.path.join(server.event_handler.destination_dir, 'digawana'))
         self.assertEquals(folder_selection.tag, '12')

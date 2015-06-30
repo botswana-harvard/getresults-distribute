@@ -22,10 +22,11 @@ class ServerError(Exception):
 
 class Server(object):
 
-    def __init__(self, event_handler, file_handler=None, hostname=None, timeout=None, remote_user=None,
-                 source_dir=None, destination_dir=None, archive_dir=None,
-                 mime_types=None, file_patterns=None, file_mode=None, touch_existing=None,
-                 mkdir_local=None, mkdir_destination=None, trusted_host=None):
+    def __init__(self, event_handler):
+#                  , file_handler=None, hostname=None, timeout=None, remote_user=None,
+#                  source_dir=None, destination_dir=None, archive_dir=None,
+#                  mime_types=None, file_patterns=None, file_mode=None, touch_existing=None,
+#                  mkdir_local=None, mkdir_destination=None, trusted_host=None):
         """
         See management command :func:`start_observer` or tests for usage.
 
@@ -58,21 +59,22 @@ class Server(object):
                              See also model RemoteFolder. (Default: False)
         :type mkdir_destination: boolean
         """
-        try:
-            self.event_handler = event_handler(
-                hostname=hostname, remote_user=remote_user, file_handler=file_handler,
-                timeout=timeout, mkdir_local=mkdir_local, mkdir_destination=mkdir_destination,
-                source_dir=source_dir, destination_dir=destination_dir, archive_dir=archive_dir,
-                mime_types=mime_types, file_patterns=file_patterns, file_mode=file_mode, trusted_host=trusted_host)
-        except TypeError as e:
-            if 'object is not callable' in str(e):
-                self.event_handler = RemoteFolderEventHandler(
-                    hostname=hostname, remote_user=remote_user, file_handler=file_handler,
-                    timeout=timeout, mkdir_local=mkdir_local, mkdir_destination=mkdir_destination,
-                    source_dir=source_dir, destination_dir=destination_dir, archive_dir=archive_dir,
-                    mime_types=mime_types, file_patterns=file_patterns, file_mode=file_mode, trusted_host=trusted_host)
-            else:
-                raise
+        self.event_handler = event_handler
+#         try:
+#             self.event_handler = event_handler(
+#                 hostname=hostname, remote_user=remote_user, file_handler=file_handler,
+#                 timeout=timeout, mkdir_local=mkdir_local, mkdir_destination=mkdir_destination,
+#                 source_dir=source_dir, destination_dir=destination_dir, archive_dir=archive_dir,
+#                 mime_types=mime_types, file_patterns=file_patterns, file_mode=file_mode, trusted_host=trusted_host)
+#         except TypeError as e:
+#             if 'object is not callable' in str(e):
+#                 self.event_handler = RemoteFolderEventHandler(
+#                     hostname=hostname, remote_user=remote_user, file_handler=file_handler,
+#                     timeout=timeout, mkdir_local=mkdir_local, mkdir_destination=mkdir_destination,
+#                     source_dir=source_dir, destination_dir=destination_dir, archive_dir=archive_dir,
+#                     mime_types=mime_types, file_patterns=file_patterns, file_mode=file_mode, trusted_host=trusted_host)
+#             else:
+#                 raise
 
     def __str__(self):
         return 'Server started on {}'.format(timezone.now())
@@ -83,8 +85,6 @@ class Server(object):
             observer.schedule(self.event_handler, path=self.event_handler.source_dir)
             self.event_handler.connect()
             observer.start()
-            if self.event_handler.touch_existing:
-                self.event_handler.touch_files()
             try:
                 while True:
                     time.sleep(sleep or 1)

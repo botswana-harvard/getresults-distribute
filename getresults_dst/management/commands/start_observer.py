@@ -30,19 +30,21 @@ class Command(BaseCommand):
         archive_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_ARCHIVE_FOLDER)
         file_patterns = settings.GRTX_FILE_PATTERNS
         mime_types = settings.GRTX_MIME_TYPES
+
+        event_handler = GrRemoteFolderEventHandler(
+            file_handler=GrBhsFileHandler,
+            hostname=hostname,
+            trusted_host=True,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            archive_dir=archive_dir,
+            file_patterns=file_patterns,
+            mime_types=mime_types,
+            touch_existing=True,
+            mkdir_destination=True)
+
         try:
-            server = Server(
-                GrRemoteFolderEventHandler,
-                file_handler=GrBhsFileHandler,
-                hostname=hostname,
-                trusted_host=True,
-                source_dir=source_dir,
-                destination_dir=destination_dir,
-                archive_dir=archive_dir,
-                file_patterns=file_patterns,
-                mime_types=mime_types,
-                touch_existing=True,
-                mkdir_destination=True)
+            server = Server(event_handler)
         except (ConnectionResetError, SSHException, ConnectionRefusedError, socket.gaierror) as e:
             raise CommandError(str(e))
         sys.stdout.write('\n' + str(server) + '\n')

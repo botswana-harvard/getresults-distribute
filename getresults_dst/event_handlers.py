@@ -88,19 +88,13 @@ class FolderEventHandler(BaseEventHandler):
     folder_handler = BaseFolderHandler()
     patterns = ['*.*']
 
-    def __init__(self, hostname=None, remote_user=None, trusted_host=None, file_handler=None,
-                 source_dir=None, destination_dir=None, archive_dir=None,
-                 mkdir_local=None, mkdir_destination=None,
-                 mime_types=None, file_patterns=None, touch_existing=None,
-                 file_mode=None, **kwargs):
-        super(FolderEventHandler, self).__init__(
-            hostname=hostname, remote_user=remote_user, trusted_host=trusted_host)
-        self.hostname = hostname or 'localhost'
-        self.remote_user = remote_user or pwd.getpwuid(os.getuid()).pw_name
+    def __init__(
+            self, file_handler=None, source_dir=None, destination_dir=None, archive_dir=None,
+            mkdir_local=None, mkdir_destination=None, mime_types=None, file_patterns=None,
+            touch_existing=None, file_mode=None, **kwargs):
+        super(FolderEventHandler, self).__init__(**kwargs)
         self.mkdir_local = mkdir_local
         self.mkdir_destination = mkdir_destination
-        self.mkdir_destination = mkdir_destination
-        self.mkdir_local = mkdir_local
         self.check_folders(source_dir, archive_dir, destination_dir)
         self.touch_existing = touch_existing
         if touch_existing:
@@ -278,13 +272,9 @@ class RemoteFolderEventHandler(FolderEventHandler):
     folder_handler = BaseLookupFolderHandler()
     patterns = ['*.*']
 
-    def __init__(self, **kwargs):
-        self.timeout = kwargs.get('timeout', 5.0)
+    def __init__(self, timeout=None, **kwargs):
+        self.timeout = timeout or 5.0
         self.ssh = None
-        try:
-            self.remote_user = kwargs.get('remote_user', settings.GRTX_REMOTE_USERNAME)
-        except AttributeError:
-            self.remote_user = pwd.getpwuid(os.getuid()).pw_name
         super(RemoteFolderEventHandler, self).__init__(**kwargs)
 
     def check_folders(self, source_dir, archive_dir, destination_dir):
