@@ -80,6 +80,8 @@ Add to `settings.py`:
 	)
 
 
+	FILE_UPLOAD_PERMISSIONS = 0o664
+
 	MEDIA_URL = '/media/'
 
 	MEDIA_ROOT = os.path.expanduser('~/getresults_files/')
@@ -233,3 +235,25 @@ SSH/SCP
 -------
 
 Files are always transferred using SCP. You need to setup key-based authentication first and check that it works between local and remote machines for the current account. This also applies if the _destination_ folder is on the same host as the _source_ folder.
+
+Deployment on Apache
+--------------------
+
+As shown above, upload permissions used by Django are set to RW-RW-R-
+
+	FILE_UPLOAD_PERMISSIONS = 0o664
+
+Apache uses the www-data user. You cannot run the observer on this account. So you may choose to store files under
+/var/www/data and add the observer account to www-data or store files in the home folder of the observer
+and add www-data to the observer group. For example, if files are in the observer home folder:
+
+	chgrp -R www-data ~/getresults_files/
+	chgrp g+w www-data ~/getresults_files/
+
+You should limit the request size that can be uploaded, `LimitRequestBody`, in the apache conf file, for example:
+
+       Alias /media/ /home/observer/getresults_files/
+        <Directory /home/observer/getresults_files >
+          Require all granted
+          LimitRequestBody 15000
+        </Directory>

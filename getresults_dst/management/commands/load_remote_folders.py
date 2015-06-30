@@ -9,6 +9,7 @@
 
 import sys
 
+from builtins import FileNotFoundError
 from django.core.management.base import BaseCommand, CommandError
 
 

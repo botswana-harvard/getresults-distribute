@@ -81,7 +81,10 @@ class BaseEventHandler(PatternMatchingEventHandler):
 
 
 class FolderEventHandler(BaseEventHandler):
+    """An event handler that moves a file from a source folder to a destination folder.
 
+    :func:`on_created` and on :func:`on_modified` and handled.
+    """
     folder_handler = BaseFolderHandler()
     patterns = ['*.*']
 
@@ -90,7 +93,8 @@ class FolderEventHandler(BaseEventHandler):
                  mkdir_local=None, mkdir_destination=None,
                  mime_types=None, file_patterns=None, touch_existing=None,
                  file_mode=None, **kwargs):
-        super(FolderEventHandler, self).__init__(hostname=hostname, remote_user=remote_user, trusted_host=trusted_host)
+        super(FolderEventHandler, self).__init__(
+            hostname=hostname, remote_user=remote_user, trusted_host=trusted_host)
         self.hostname = hostname or 'localhost'
         self.remote_user = remote_user or pwd.getpwuid(os.getuid()).pw_name
         self.mkdir_local = mkdir_local
@@ -118,11 +122,6 @@ class FolderEventHandler(BaseEventHandler):
         except TypeError:
             raise EventHandlerError('No patterns defined. Nothing to do. Got {}'.format(file_patterns))
 
-    def check_folders(self, source_dir, archive_dir, destination_dir):
-        self.source_dir = self.check_local_path(source_dir, update_permissions=True)
-        self.archive_dir = self.check_local_path(archive_dir)
-        self.destination_dir = self.check_destination_path(destination_dir)
-
     def on_created(self, event):
         self.process_on_added(event)
 
@@ -131,6 +130,8 @@ class FolderEventHandler(BaseEventHandler):
             self.process_on_added(event)
 
     def process_on_added(self, event):
+        """Moves file from source_dir to the destination_dir as
+        determined by :func:`folder_handler.select`."""
         print('{} {} {}'.format(timezone.now(), event.event_type, event.src_path))
         filename = event.src_path.split('/')[-1:][0]
         path = os.path.join(self.source_dir, filename)
@@ -151,6 +152,12 @@ class FolderEventHandler(BaseEventHandler):
                     else:
                         os.remove(path)
 
+    def check_folders(self, source_dir, archive_dir, destination_dir):
+        """Check that folders exist and create if mkdir is True."""
+        self.source_dir = self.check_local_path(source_dir)
+        self.archive_dir = self.check_local_path(archive_dir)
+        self.destination_dir = self.check_destination_path(destination_dir)
+
     def copy_to_folder(self, filename, destination_dir):
         """Copies file to the destination path and
         archives if the archive_dir has been specified."""
@@ -165,7 +172,7 @@ class FolderEventHandler(BaseEventHandler):
             fileinfo = None
         return fileinfo
 
-    def check_local_path(self, path, update_permissions=None):
+    def check_local_path(self, path):
         """Returns the path or raises an Exception if path does not exist locally."""
         path = os.path.expanduser(path)
         path = path[:-1] if path.endswith('/') else path
@@ -255,13 +262,18 @@ class LocalFolderEventHandler(FolderEventHandler):
 
 class RemoteFolderEventHandler(FolderEventHandler):
 
-    """A folder handler that puts the file onto a remote folder.
+    """A folder handler that scp's files to a remote folder.
 
-    You should subclass the BaseLookupFolderHandler to your needs or create your
-    own folder_handler class. See module folder_handlers for examples.
+    * copies file to destination
+    * moves file to archive
+    * updates sent history
 
-    The sent History model is updated and linked to the file renamed and
-    placed in the archive folder.
+    Attributes:
+        folder_handler: You should create your own folder_handler by
+                        subclassing the BaseLookupFolderHandler.
+                        class. See module folder_handlers for examples.
+        patterns:       a list of patterns such as ['*.pdf'].
+
     """
     folder_handler = BaseLookupFolderHandler()
     patterns = ['*.*']
@@ -276,14 +288,18 @@ class RemoteFolderEventHandler(FolderEventHandler):
         super(RemoteFolderEventHandler, self).__init__(**kwargs)
 
     def check_folders(self, source_dir, archive_dir, destination_dir):
-        self.source_dir = self.check_local_path(source_dir, update_permissions=True)
+        """Checks that all working folders, source, destination (on remote) and archive exist."""
+        self.source_dir = self.check_local_path(source_dir)
         self.archive_dir = self.check_local_path(archive_dir)
         with SSHClient() as ssh:
             self.connect(ssh=ssh)
             self.destination_dir = self.check_destination_path(destination_dir, ssh=ssh)
 
     def connect(self, ssh=None):
-        """Returns a connected ssh instance."""
+        """Connects the ssh instance.
+
+        If :param:`ssh` is not provided will connect `self.ssh`.
+        """
         ssh = ssh if ssh else self.ssh
         ssh.load_system_host_keys()
         if self.trusted_host:
@@ -322,6 +338,13 @@ class RemoteFolderEventHandler(FolderEventHandler):
         self.connect()
 
     def copy_to_folder(self, filename, destination_dir):
+        """Scp file to destination_dir on remote host.
+        @param filename: file name without path
+        @type filename: str
+        @param destination_dir: remote host folder
+        @type filename: str
+
+        @return fileinfo dict"""
         with SCPClient(self.ssh.get_transport()) as scp_client:
             try:
                 fileinfo = self.put(filename, destination_dir, scp_client)
@@ -338,7 +361,15 @@ class RemoteFolderEventHandler(FolderEventHandler):
 
     def put(self, filename, destination_dir, scp_client):
         """Copies file to the destination path and
-        archives if the archive_dir has been specified."""
+        archives if the archive_dir has been specified.
+
+        @param filename: file name without path
+        @type filename: str
+        @param destination_dir: remote host folder
+        @type filename: str
+        @param scp_client: instance of :class:`SCPClient`
+
+        @return fileinfo dict"""
 
         source_filename = os.path.join(self.source_dir, filename)
         destination_filename = os.path.join(destination_dir, filename)
@@ -356,7 +387,17 @@ class RemoteFolderEventHandler(FolderEventHandler):
 
     def check_destination_path(self, path, mkdir_destination=None, ssh=None):
         """Returns the destination_dir or raises an Exception if destination_dir does
-        not exist on the remote host."""
+        not exist on the remote host.
+
+        @param path: path on remote host
+        @type path: byte or str
+        @param mkdir_destination: if True attempts to create the remote folder.
+        @type mkdir_destination: boolean
+
+        @raise FileNotFoundError: if path does not exist and mkdir_destination is False
+
+        @return path
+        """
         ssh = ssh if ssh else self.ssh
         if path[0:1] == b'~' or path[0:1] == '~':
             _, stdout, _ = ssh.exec_command("pwd")
