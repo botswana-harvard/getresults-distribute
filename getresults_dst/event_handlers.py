@@ -92,6 +92,34 @@ class FolderEventHandler(BaseEventHandler):
             self, file_handler=None, source_dir=None, destination_dir=None, archive_dir=None,
             mkdir_local=None, mkdir_destination=None, mime_types=None, file_patterns=None,
             touch_existing=None, file_mode=None, **kwargs):
+        """
+        :param file_handler: Custom file handler. If omitted the :class:`BaseFileHandler`
+                             will be used by default.
+
+        :param remote_user: the remote user name on hostname to use when connecting. (Default: current user).
+        :type remote_user: str
+
+        :param hostname: the remote host to connect to. (Default: 'localhost').
+        :type hostname: str
+
+        :param mime_type: comma separated list of mime_types. (Default: 'text/plain').
+        :type mime_type: str
+
+        :param file_mode: updates existing files to this file mode. Existing files
+                          are files in source_dir before starting the observer. (Default: 644)
+        :type file_mode: integer
+
+        :params file_patterns: a list of patterns, e.g. ['*.pdf']
+        :type file_patterns: list or tuple
+
+        :param touch_existing: if True will `touch` existing files to trigger an event
+        :type touch_existing: boolean
+
+        :param mkdir_destination: if True will attempt to create the remote folder or folders.
+                             See also model RemoteFolder. (Default: False)
+        :type mkdir_destination: boolean
+        """
+
         super(FolderEventHandler, self).__init__(**kwargs)
         self.mkdir_local = mkdir_local
         self.mkdir_destination = mkdir_destination

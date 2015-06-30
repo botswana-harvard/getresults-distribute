@@ -23,6 +23,8 @@ class Server(object):
     def __init__(self, event_handler):
         """
         See management command :func:`start_observer` or tests for usage.
+
+        :param event_handler: an instance of :class:`BaseEventHandler`.
         """
         self.event_handler = event_handler
 
