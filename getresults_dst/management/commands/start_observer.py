@@ -25,6 +25,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         hostname = settings.GRTX_REMOTE_HOSTNAME
+        remote_user = settings.GRTX_REMOTE_USERNAME
         source_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_UPLOAD_FOLDER)
         destination_dir = settings.GRTX_REMOTE_FOLDER
         archive_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_ARCHIVE_FOLDER)
@@ -33,6 +34,7 @@ class Command(BaseCommand):
 
         event_handler = GrRemoteFolderEventHandler(
             hostname=hostname,
+            remote_user=remote_user,
             trusted_host=True,
             source_dir=source_dir,
             destination_dir=destination_dir,
