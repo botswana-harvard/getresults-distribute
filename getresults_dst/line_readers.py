@@ -104,11 +104,12 @@ class RegexApacheLineReader(object):
                 history.ack_user = remote_ip
                 history.acknowledged = True
                 history.save()
+        in_sent_history = History.objects.filter(filename=match_string).exists()
         acknowledgement = Acknowledgment.objects.create(
             filename=match_string,
             ack_user=remote_ip,
             ack_datetime=time_received,
             ack_string=ln[0:500],
-            in_sent_history=True if history else False,
+            in_sent_history=in_sent_history,
         )
         return acknowledgement

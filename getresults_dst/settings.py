@@ -95,14 +95,14 @@ WSGI_APPLICATION = 'getresults_dst.wsgi.application'
 # }
 
 DATABASES = {
-   'default': {
-       'ENGINE': 'django.db.backends.postgresql_psycopg2',
-       'NAME': 'gr',
-       'USER': 'postgres',
-       'PASSWORD': 'cc3721b',
-       'HOST': 'localhost',
-       'PORT': '',
-   }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'gr',
+        'USER': 'postgres',
+        'PASSWORD': 'cc3721b',
+        'HOST': 'localhost',
+        'PORT': '',
+    }
 }
 
 # DATABASES = {
