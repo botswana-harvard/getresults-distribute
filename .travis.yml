@@ -31,7 +31,7 @@ script:
   - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/viral_load
   - mkdir -p /home/travis/getresults_files/upload
   - mkdir -p /home/travis/getresults_files/archive
-  - mkdir -p /home/travis/getresults_files/viral_load
+  - mkdir -p /home/travis/viral_load
   - coverage run --source=getresults_dst manage.py test
 
 after_success:
