@@ -9,8 +9,9 @@
 
 import magic
 import os
-
+import watchdog
 from django.conf import settings
+from django.core.files import File
 from django.test.testcases import TestCase
 from reportlab.pdfgen import canvas
 
@@ -21,6 +22,8 @@ from getresults_dst.file_handlers import BaseFileHandler
 from paramiko.client import SSHClient
 from getresults_dst.getresults.file_handlers import (
     GrBhsFileHandler, GrCdc1FileHandler, GrCdc2FileHandler, GrFileHandler)
+from getresults_dst.models import History, Upload
+from getresults_dst.actions import update_on_sent_action
 
 
 class TestGetresults(TestCase):
@@ -414,3 +417,55 @@ class TestGetresults(TestCase):
         self.assertIn('12-345-67-89.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
         self.assertIn('123-4567.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
         self.remove_temp_files(pdf_filenames + [txt_filename], server)
+
+    def upload_file_event(self, server, filename):
+        with open(os.path.join(server.event_handler.source_dir, filename), 'rb') as f:
+            upload = Upload()
+            upload.file.name = File(f).name
+            upload.save()
+        event = watchdog.events.FileCreatedEvent(os.path.join(server.event_handler.source_dir, filename))
+        with SSHClient() as server.event_handler.ssh:
+            server.event_handler.connect()
+            server.event_handler.on_created(event)
+
+    def test_check_sent_action(self):
+        load_remote_folders_from_csv()
+        source_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_UPLOAD_FOLDER)
+        destination_dir = settings.GRTX_REMOTE_FOLDER
+        archive_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_ARCHIVE_FOLDER)
+        filename = '066-12000001-3.pdf'
+        self.create_temp_pdf(os.path.join(source_dir, filename), '066-12000001-3')
+        event_handler = GrRemoteFolderEventHandler(
+            file_handler=GrFileHandler,
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            archive_dir=archive_dir,
+            file_patterns=['*.pdf'],
+            mime_types=['application/pdf'],
+            mkdir_destination=False)
+        server = Server(event_handler)
+
+        self.upload_file_event(server, filename)
+        self.assertIsInstance(History.objects.get(filename=filename), History)
+        self.assertIsInstance(Upload.objects.get(filename=filename), Upload)
+        update_on_sent_action(None, None, Upload.objects.filter(filename=filename))
+        self.assertIsInstance(Upload.objects.get(filename=filename, sent=True), Upload)
+
+        self.create_temp_pdf(os.path.join(source_dir, filename), '066-12000001-3')
+        self.upload_file_event(server, filename)
+        self.assertIsInstance(History.objects.filter(filename=filename).order_by('sent_datetime')[1], History)
+        self.assertIsInstance(Upload.objects.get(filename=filename, sent=False), Upload)
+        update_on_sent_action(None, None, Upload.objects.filter(filename=filename, sent=False))
+        self.assertEquals(Upload.objects.filter(filename=filename, sent=True).count(), 2)
+
+        self.create_temp_pdf(os.path.join(source_dir, filename), '066-12000001-3')
+        self.upload_file_event(server, filename)
+        self.assertIsInstance(History.objects.filter(filename=filename).order_by('sent_datetime')[1], History)
+        self.assertIsInstance(Upload.objects.get(filename=filename, sent=False), Upload)
+        upload = Upload.objects.get(filename=filename, sent=False)
+        upload.filename = 'upload/' + upload.filename
+        update_on_sent_action(None, None, Upload.objects.filter(filename=filename, sent=False))
+        self.assertEquals(Upload.objects.filter(filename=filename, sent=True).count(), 3)
+
+        self.remove_temp_files([os.path.join(source_dir, filename)], server)
+        self.remove_temp_files([os.path.join(archive_dir, filename)], server)

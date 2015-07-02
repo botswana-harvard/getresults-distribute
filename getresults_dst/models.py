@@ -7,6 +7,8 @@
 # you should have received as part of this distribution.
 #
 
+import os
+
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.db import models
@@ -178,7 +180,7 @@ class Upload(models.Model):
 
     def save(self, *args, **kwargs):
         if self.file:
-            self.filename = self.file.name
+            self.filename = os.path.split(self.file.name)[1]
             self.filesize = self.file.size
         super(Upload, self).save(*args, **kwargs)
 

@@ -87,23 +87,23 @@ WSGI_APPLICATION = 'getresults_dst.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
-
 # DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#        'NAME': 'gr',
-#        'USER': 'postgres',
-#        'PASSWORD': 'postgres',
-#        'HOST': 'localhost',
-#        'PORT': '',
-#    }
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     }
 # }
+
+DATABASES = {
+   'default': {
+       'ENGINE': 'django.db.backends.postgresql_psycopg2',
+       'NAME': 'gr',
+       'USER': 'postgres',
+       'PASSWORD': 'cc3721b',
+       'HOST': 'localhost',
+       'PORT': '',
+   }
+}
 
 # DATABASES = {
 #     'default': {
@@ -147,8 +147,8 @@ STATICFILES_FINDERS = (
 )
 
 GIT_DIR = BASE_DIR.ancestor(1)
-MEDIA_ROOT = os.path.expanduser('~/source/getresults-distribute/getresults_dst/testdata')
-# MEDIA_ROOT = os.path.expanduser('/home/bcpp/getresults_files/')
+# MEDIA_ROOT = os.path.expanduser('~/source/getresults-distribute/getresults_dst/testdata')
+MEDIA_ROOT = os.path.expanduser('~/getresults_files/')
 MEDIA_URL = '/media/'
 FILE_UPLOAD_PERMISSIONS = 0o664
 
