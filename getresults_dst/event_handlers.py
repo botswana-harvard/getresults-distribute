@@ -86,6 +86,7 @@ class FolderEventHandler(BaseEventHandler):
     :func:`on_created` and on :func:`on_modified` and handled.
     """
     folder_handler = BaseFolderHandler()
+    file_handler = BaseFileHandler
     patterns = ['*.*']
 
     def __init__(
@@ -127,13 +128,10 @@ class FolderEventHandler(BaseEventHandler):
         self.touch_existing = touch_existing
         if touch_existing:
             self.update_file_mode(file_mode)
-        try:
+        if file_handler:
             self.file_handler = file_handler(**kwargs)
-        except TypeError as e:
-            if 'object is not callable' in str(e):
-                self.file_handler = BaseFileHandler(**kwargs)
-            else:
-                raise
+        else:
+            self.file_handler = self.file_handler(**kwargs)
         self.filename_max_length = 50
         try:
             self.mime_types = [s.encode() for s in mime_types]
@@ -266,13 +264,13 @@ class FolderEventHandler(BaseEventHandler):
         """Returns listdir as is or filtered by patterns and mime_type and length of filename."""
         basedir = basedir or self.source_dir
         lst = []
-        for f in listdir:
-            mime_type = magic.from_file(os.path.join(basedir, f), mime=True)
+        for filename in listdir:
+            mime_type = magic.from_file(os.path.join(basedir, filename), mime=True)
             if (mime_type in self.mime_types and
-                    [pat for pat in self.file_patterns if f.endswith(pat.split('*')[1])] and
-                    len(f) <= self.filename_max_length):
-                if self.file_handler.process(f, basedir, mime_type):
-                    lst.append(f)
+                    [pat for pat in self.file_patterns if filename.endswith(pat.split('*')[1])] and
+                    len(filename) <= self.filename_max_length):
+                if self.file_handler.process(basedir, filename, mime_type):
+                    lst.append(filename)
         return lst
 
 

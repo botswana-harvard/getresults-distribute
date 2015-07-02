@@ -148,7 +148,9 @@ STATICFILES_FINDERS = (
 
 GIT_DIR = BASE_DIR.ancestor(1)
 MEDIA_ROOT = os.path.expanduser('~/source/getresults-distribute/getresults_dst/testdata')
+# MEDIA_ROOT = os.path.expanduser('/home/bcpp/getresults_files/')
 MEDIA_URL = '/media/'
+FILE_UPLOAD_PERMISSIONS = 0o664
 
 # local folders are relative to MEDIA_ROOT
 GRTX_REMOTE_HOSTNAME = 'localhost'

@@ -13,6 +13,9 @@ from getresults_dst.constants import PDF
 from getresults_dst.folder_handlers import BaseLookupFolderHandler
 from getresults_dst.event_handlers import RemoteFolderEventHandler
 
+from .file_handlers import GrFileHandler
+from .patterns import BHS_PATTERN, CDC1_PATTERN, CDC2_PATTERN
+
 __all__ = ['GrRemoteFolderEventHandler']
 
 
@@ -33,7 +36,7 @@ class GrLookupFolderHandler(BaseLookupFolderHandler):
     def bhs_folder_tag_func(self, filename, mime_type):
         """Returns a 2 digit code extracted from f if f matches the pattern,
         otherwise returns None."""
-        pattern = re.compile(r'^066\-[0-9]{8}\-[0-9]{1}')
+        pattern = re.compile(BHS_PATTERN)
         if mime_type == PDF and re.match(pattern, filename):
             return filename[4:6]
         return None
@@ -41,7 +44,7 @@ class GrLookupFolderHandler(BaseLookupFolderHandler):
     def cdc1_folder_tag_func(self, filename, mime_type):
         """Returns a 2 digit code extracted from f if f matches the pattern,
         otherwise returns None."""
-        pattern = re.compile(r'^[123]{1}[0-9]{2}\-[0-9]{4}')
+        pattern = re.compile(CDC1_PATTERN)
         if mime_type == PDF and re.match(pattern, filename):
             return filename[1:3]
         return None
@@ -49,7 +52,7 @@ class GrLookupFolderHandler(BaseLookupFolderHandler):
     def cdc2_folder_tag_func(self, filename, mime_type):
         """Returns a 2 digit code extracted from f if f matches the pattern,
         otherwise returns None."""
-        pattern = re.compile(r'^[0-9]{2}\-[0-9]{3}\-[0-9]{2}\-[0-9]{2}')
+        pattern = re.compile(CDC2_PATTERN)
         if mime_type == PDF and re.match(pattern, filename):
             return filename[3:5]
         return None
@@ -58,4 +61,5 @@ class GrLookupFolderHandler(BaseLookupFolderHandler):
 class GrRemoteFolderEventHandler(RemoteFolderEventHandler):
 
     folder_handler = GrLookupFolderHandler()
+    file_handler = GrFileHandler
     patterns = ['*.pdf']

@@ -47,7 +47,7 @@ class Tests(TestCase):
     def test_failed_authentication(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = '~/' + os.path.join(settings.BASE_DIR.split(os.path.expanduser('~/'))[1], 'testdata/outbox')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         self.assertRaises(
             AuthenticationException,
             RemoteFolderEventHandler,
@@ -62,7 +62,7 @@ class Tests(TestCase):
     def test_remote_folder(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = '~/' + os.path.join(settings.BASE_DIR.split(os.path.expanduser('~/'))[1], 'testdata/outbox')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
             source_dir=source_dir,
             destination_dir=destination_dir,
@@ -77,7 +77,7 @@ class Tests(TestCase):
     def test_mime_type(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
             source_dir=source_dir,
             destination_dir=destination_dir,
@@ -90,7 +90,7 @@ class Tests(TestCase):
     def test_folder(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
             source_dir=source_dir,
             destination_dir=destination_dir,
@@ -106,7 +106,7 @@ class Tests(TestCase):
     def test_bad_folder(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inboxnnnnn')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         self.assertRaises(
             FileNotFoundError,
             RemoteFolderEventHandler,
@@ -118,7 +118,7 @@ class Tests(TestCase):
         )
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outboxttt')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         self.assertRaises(
             FileNotFoundError,
             RemoteFolderEventHandler,
@@ -175,7 +175,7 @@ class Tests(TestCase):
             pass
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join('/tmp/tmp_getresults_dst_out')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         self.assertRaises(
             FileNotFoundError,
             RemoteFolderEventHandler,
@@ -213,7 +213,7 @@ class Tests(TestCase):
     def test_filter_listdir_filename_length(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
             source_dir=source_dir,
             destination_dir=destination_dir,
@@ -237,7 +237,7 @@ class Tests(TestCase):
     def test_filter_listdir_txt(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
             source_dir=source_dir,
             destination_dir=destination_dir,
@@ -257,7 +257,7 @@ class Tests(TestCase):
     def test_filter_listdir_pdf(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
             source_dir=source_dir,
             destination_dir=destination_dir,
@@ -277,7 +277,7 @@ class Tests(TestCase):
     def test_filter_listdir_pdf_wrong_mime(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
             source_dir=source_dir,
             destination_dir=destination_dir,
@@ -297,7 +297,7 @@ class Tests(TestCase):
     def test_filter_listdir_unexpected_pattern_for_mime(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
             source_dir=source_dir,
             destination_dir=destination_dir,
@@ -317,7 +317,7 @@ class Tests(TestCase):
     def test_converts_mime_type_to_byte(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '066-1200001-3.txt'
         with open(os.path.join(source_dir, filename), 'w') as f:
             f.write('hello earth')
@@ -343,7 +343,7 @@ class Tests(TestCase):
         load_remote_folders_from_csv()
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '066-12000001-3.pdf'
         self.create_temp_pdf(os.path.join(source_dir, filename))
         self.assertEqual(magic.from_file(os.path.join(source_dir, filename), mime=True), b'application/pdf')
@@ -364,25 +364,3 @@ class Tests(TestCase):
         except IOError:
             pass
 
-    def test_file_handler(self):
-        load_remote_folders_from_csv()
-        RegexPdfFileHandler.regex = r'066\-[0-9]{8}\-[0-9]{1}'
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
-        destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
-        filename = '066-12000001-3.pdf'
-        self.create_temp_pdf(os.path.join(source_dir, filename), '066-12000001-3')
-        self.assertEqual(magic.from_file(os.path.join(source_dir, filename), mime=True), b'application/pdf')
-        event_handler = RemoteFolderEventHandler(
-            file_handler=RegexPdfFileHandler,
-            source_dir=source_dir,
-            destination_dir=destination_dir,
-            archive_dir=archive_dir,
-            file_patterns=['*.pdf'],
-            mime_types=['application/pdf'],
-            mkdir_destination=False)
-        server = Server(event_handler)
-        server.event_handler.file_handler.process(source_dir, filename, b'application/pdf')
-        self.assertTrue(server.event_handler.file_handler.process(source_dir, filename, b'application/pdf'))
-        self.assertEquals(server.event_handler.file_handler.match_string, '066-12000001-3')
-        self.remove_temp_files([os.path.join(source_dir, filename)], server)

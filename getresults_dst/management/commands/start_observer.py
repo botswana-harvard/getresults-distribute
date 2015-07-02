@@ -16,7 +16,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from paramiko import SSHException
 
-from getresults_dst.getresults import GrRemoteFolderEventHandler, GrBhsFileHandler
+from getresults_dst.getresults import GrRemoteFolderEventHandler
 from getresults_dst.server import Server
 
 
@@ -32,7 +32,6 @@ class Command(BaseCommand):
         mime_types = settings.GRTX_MIME_TYPES
 
         event_handler = GrRemoteFolderEventHandler(
-            file_handler=GrBhsFileHandler,
             hostname=hostname,
             trusted_host=True,
             source_dir=source_dir,
@@ -48,8 +47,8 @@ class Command(BaseCommand):
         except (ConnectionResetError, SSHException, ConnectionRefusedError, socket.gaierror) as e:
             raise CommandError(str(e))
         sys.stdout.write('\n' + str(server) + '\n')
-        sys.stdout.write('patterns: {}\n'.format(','.join([x for x in server.event_handler.file_patterns])))
-        sys.stdout.write('mime: {}\n'.format(','.join([x.decode() for x in server.event_handler.mime_types])))
+        sys.stdout.write('File patterns: {}\n'.format(','.join([x for x in server.event_handler.file_patterns])))
+        sys.stdout.write('Mime: {}\n'.format(','.join([x.decode() for x in server.event_handler.mime_types])))
         sys.stdout.write('Upload folder: {}\n'.format(server.event_handler.source_dir))
         sys.stdout.write(
             'Remote folder: {}@{}:{}\n'.format(
