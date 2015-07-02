@@ -12,15 +12,17 @@ import sys
 from django.utils import timezone
 from paramiko import SFTPClient, SSHClient
 
-from .event_handlers import BaseEventHandler
 from .line_readers import BaseLineReader
 from .models import LogReaderHistory
+from .mixins import SSHConnectMixin
 
 
-class LogReader (BaseEventHandler):
+class LogReader (SSHConnectMixin):
 
     def __init__(self, line_reader, hostname, user, path, timeout=None):
-        super(LogReader, self).__init__(hostname, timeout, remote_user=user)
+        self.hostname = hostname or 'localhost'
+        self.timeout = timeout or 5.0
+        self.remote_user = user
         self.line_reader = line_reader() or BaseLineReader()
         self.path = path
         self.trusted_host = True

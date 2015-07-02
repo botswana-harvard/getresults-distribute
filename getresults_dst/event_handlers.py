@@ -15,13 +15,11 @@ import random
 import shutil
 import socket
 import string
-import time
 
 from builtins import (
-    IsADirectoryError, FileNotFoundError, ConnectionRefusedError, ConnectionResetError, PermissionError)
+    IsADirectoryError, FileNotFoundError, PermissionError)
 from datetime import datetime
-from paramiko import AutoAddPolicy, SFTPClient, SSHClient
-from paramiko.ssh_exception import BadHostKeyException, AuthenticationException, SSHException
+from paramiko import SFTPClient, SSHClient
 from scp import SCPClient, SCPException
 from watchdog.events import PatternMatchingEventHandler
 
@@ -31,6 +29,7 @@ from django.utils import timezone
 from .file_handlers import BaseFileHandler
 from .folder_handlers import BaseLookupFolderHandler, BaseFolderHandler
 from .models import TX_SENT, History
+from .mixins import SSHConnectMixin
 
 tz = pytz.timezone(settings.TIME_ZONE)
 
@@ -284,7 +283,7 @@ class LocalFolderEventHandler(FolderEventHandler):
     patterns = ['*.*']
 
 
-class RemoteFolderEventHandler(FolderEventHandler):
+class RemoteFolderEventHandler(FolderEventHandler, SSHConnectMixin):
 
     """A folder handler that scp's files to a remote folder.
 
@@ -314,48 +313,6 @@ class RemoteFolderEventHandler(FolderEventHandler):
         with SSHClient() as ssh:
             self.connect(ssh=ssh)
             self.destination_dir = self.check_destination_path(destination_dir, ssh=ssh)
-
-    def connect(self, ssh=None):
-        """Connects the ssh instance.
-
-        If :param:`ssh` is not provided will connect `self.ssh`.
-        """
-        ssh = ssh if ssh else self.ssh
-        ssh.load_system_host_keys()
-        if self.trusted_host:
-            ssh.set_missing_host_key_policy(AutoAddPolicy())
-        while True:
-            try:
-                ssh.connect(
-                    self.hostname,
-                    username=self.remote_user,
-                    timeout=self.timeout,
-                    compress=True,
-                )
-                print('Connected to host {}. '.format(self.hostname))
-                break
-            except (socket.timeout, ConnectionRefusedError) as e:
-                print('{}. {} for {}@{}. Retrying ...'.format(
-                    timezone.now(), str(e), self.remote_user, self.hostname)
-                )
-                time.sleep(5)
-            except AuthenticationException as e:
-                raise AuthenticationException(
-                    'Got {} for user {}@{}'.format(
-                        str(e)[0:-1], self.remote_user, self.hostname))
-            except BadHostKeyException as e:
-                raise BadHostKeyException(
-                    'Add server to known_hosts on host {}.'
-                    ' Got {}.'.format(e, self.hostname))
-            except socket.gaierror:
-                raise socket.gaierror('Hostname {} not known or not available'.format(self.hostname))
-            except ConnectionResetError as e:
-                raise ConnectionResetError('{} for {}@{}'.format(str(e), self.remote_user, self.hostname))
-            except SSHException as e:
-                raise SSHException('{} for {}@{}'.format(str(e), self.remote_user, self.hostname))
-
-    def reconnect(self):
-        self.connect()
 
     def copy_to_folder(self, filename, destination_dir):
         """Scp file to destination_dir on remote host.
