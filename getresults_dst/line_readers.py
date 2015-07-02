@@ -15,6 +15,7 @@ from apache_log_parser import make_parser, LineDoesntMatchException
 from dateutil.parser import parse
 from django.conf import settings
 from getresults_dst.models import Acknowledgment, History
+from django.core.exceptions import MultipleObjectsReturned
 
 tz = pytz.timezone(settings.TIME_ZONE)
 
@@ -85,6 +86,7 @@ class RegexApacheLineReader(object):
                 filename=match_string,
                 ack_datetime__isnull=True,
                 ack_user__isnull=True,
+                acknowledged=False,
             )
             history.ack_datetime = time_received
             history.ack_user = remote_ip
@@ -92,6 +94,16 @@ class RegexApacheLineReader(object):
             history.save()
         except History.DoesNotExist:
             history = None
+        except MultipleObjectsReturned:
+            for history in History.objects.filter(
+                    filename=match_string,
+                    ack_datetime__isnull=True,
+                    ack_user__isnull=True,
+                    acknowledged=False):
+                history.ack_datetime = time_received
+                history.ack_user = remote_ip
+                history.acknowledged = True
+                history.save()
         acknowledgement = Acknowledgment.objects.create(
             filename=match_string,
             ack_user=remote_ip,
