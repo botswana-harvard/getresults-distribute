@@ -25,11 +25,12 @@ tz = pytz.timezone(settings.TIME_ZONE)
 def update_on_sent_action(modeladmin, request, uploads):
     for upload in uploads:
         try:
-            history = History.objects.get(filename=upload.filename)
+            filename = os.path.split(upload.filename)
+            history = History.objects.get(filename=filename)
             upload.sent = True
             upload.sent_datetime = history.sent_datetime
         except MultipleObjectsReturned:
-            history = History.objects.filter(filename=upload.filename).order_by('sent_datetime')
+            history = History.objects.filter(filename=filename).order_by('sent_datetime')
             upload.sent = True
             upload.sent_datetime = history[0].sent_datetime
         except History.DoesNotExist:
