@@ -52,7 +52,7 @@ class LogReader (SSHConnectMixin):
                     with sftp.open(self.path) as f:
                         f.seek(lastpos)
                         for line_number, line in enumerate(f):
-                            self.line_reader.read(line, lastpos, line_number, log_reader_history)
+                            self.line_reader.on_newline(line, lastpos, line_number, log_reader_history)
                             lastpos = f.tell()
         except KeyboardInterrupt:
             sys.stdout.write('Stopped at {} for {}@{}:{}\n'.format(
