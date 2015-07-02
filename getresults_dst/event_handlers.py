@@ -124,6 +124,14 @@ class FolderEventHandler(BaseEventHandler):
         super(FolderEventHandler, self).__init__(**kwargs)
         self.mkdir_local = mkdir_local
         self.mkdir_destination = mkdir_destination
+        try:
+            self.mime_types = [s.encode() for s in mime_types]
+        except TypeError:
+            raise EventHandlerError('No mime_types defined. Nothing to do. Got {}'.format(mime_types))
+        try:
+            self.file_patterns = [str(s) for s in file_patterns]
+        except TypeError:
+            raise EventHandlerError('No patterns defined. Nothing to do. Got {}'.format(file_patterns))
         self.check_folders(source_dir, archive_dir, destination_dir)
         self.touch_existing = touch_existing
         if touch_existing:
@@ -133,14 +141,6 @@ class FolderEventHandler(BaseEventHandler):
         else:
             self.file_handler = self.file_handler(**kwargs)
         self.filename_max_length = 50
-        try:
-            self.mime_types = [s.encode() for s in mime_types]
-        except TypeError:
-            raise EventHandlerError('No mime_types defined. Nothing to do. Got {}'.format(mime_types))
-        try:
-            self.file_patterns = [str(s) for s in file_patterns]
-        except TypeError:
-            raise EventHandlerError('No patterns defined. Nothing to do. Got {}'.format(file_patterns))
 
     def on_created(self, event):
         self.process_on_added(event)
