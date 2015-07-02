@@ -132,15 +132,15 @@ class FolderEventHandler(BaseEventHandler):
             self.file_patterns = [str(s) for s in file_patterns]
         except TypeError:
             raise EventHandlerError('No patterns defined. Nothing to do. Got {}'.format(file_patterns))
-        self.check_folders(source_dir, archive_dir, destination_dir)
-        self.touch_existing = touch_existing
-        if touch_existing:
-            self.update_file_mode(file_mode)
+        self.filename_max_length = 50
         if file_handler:
             self.file_handler = file_handler(**kwargs)
         else:
             self.file_handler = self.file_handler(**kwargs)
-        self.filename_max_length = 50
+        self.check_folders(source_dir, archive_dir, destination_dir)
+        self.touch_existing = touch_existing
+        if touch_existing:
+            self.update_file_mode(file_mode)
 
     def on_created(self, event):
         self.process_on_added(event)
