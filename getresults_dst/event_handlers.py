@@ -17,7 +17,8 @@ import socket
 import string
 import time
 
-from builtins import IsADirectoryError, FileNotFoundError, ConnectionRefusedError, ConnectionResetError
+from builtins import (
+    IsADirectoryError, FileNotFoundError, ConnectionRefusedError, ConnectionResetError, PermissionError)
 from datetime import datetime
 from paramiko import AutoAddPolicy, SFTPClient, SSHClient
 from paramiko.ssh_exception import BadHostKeyException, AuthenticationException, SSHException
@@ -258,7 +259,10 @@ class FolderEventHandler(BaseEventHandler):
         mode = mode or 0o644
         for filename in self.filtered_listdir(os.listdir(self.source_dir), self.source_dir):
             if mode:
-                os.chmod(os.path.join(self.source_dir, filename), mode)
+                try:
+                    os.chmod(os.path.join(self.source_dir, filename), mode)
+                except PermissionError:
+                    pass
 
     def filtered_listdir(self, listdir, basedir=None):
         """Returns listdir as is or filtered by patterns and mime_type and length of filename."""
