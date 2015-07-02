@@ -195,7 +195,7 @@ class TestGetresults(TestCase):
         load_remote_folders_from_csv()
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '066-12000001-3.pdf'
         self.create_temp_pdf(os.path.join(source_dir, filename), '066-12000001-3')
         self.assertEqual(magic.from_file(os.path.join(source_dir, filename), mime=True), b'application/pdf')
