@@ -33,7 +33,7 @@ class History(models.Model):
         max_length=25)
 
     remote_hostname = models.CharField(
-        max_length=25)
+        max_length=26)
 
     path = models.CharField(
         max_length=200)
@@ -42,7 +42,7 @@ class History(models.Model):
         max_length=200)
 
     remote_folder = models.CharField(
-        max_length=25,
+        max_length=27,
         default='default')
 
     remote_folder_tag = models.CharField(
@@ -62,7 +62,7 @@ class History(models.Model):
     filetimestamp = models.DateTimeField()
 
     mime_type = models.CharField(
-        max_length=25)
+        max_length=28)
 
     status = models.CharField(
         max_length=15,
