@@ -24,10 +24,9 @@ before_script:
   - eval $(ssh-agent)
   - ssh-add
 script: 
-  - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/inbox/
+  - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/upload/
   - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/archive/
   - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/outbox
-  - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/viral_load
   - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/viral_load
   - mkdir -p /home/travis/getresults_files/upload
   - mkdir -p /home/travis/getresults_files/archive
