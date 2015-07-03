@@ -30,7 +30,7 @@ class History(models.Model):
     archive = models.FileField()
 
     hostname = models.CharField(
-        max_length=25)
+        max_length=24)
 
     remote_hostname = models.CharField(
         max_length=26)
