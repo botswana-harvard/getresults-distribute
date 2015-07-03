@@ -206,7 +206,10 @@ class FolderEventHandler(BaseEventHandler):
     def check_destination_path(self, path, mkdir_destination=None):
         """Returns the destination path after checking if it exists or making it (mkdir=True)."""
         if mkdir_destination or self.mkdir_destination:
-            os.makedirs(path)
+            try:
+                os.makedirs(path)
+            except FileExistsError:
+                pass
         else:
             raise FileNotFoundError('{} does not exist.'.format(path))
         return path

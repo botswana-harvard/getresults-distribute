@@ -49,7 +49,7 @@ class BaseFolderHandler(object):
 
     def select_folder(self, instance, filename, mime_type, base_path):
         """Override to select a folder"""
-        folder_name, full_path, tag = 'folder', os.path.join(base_path, 'folder'), None
+        folder_name, full_path, tag = os.path.split(base_path)[1], base_path, None
         return folder_name, full_path, tag
 
 

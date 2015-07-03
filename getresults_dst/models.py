@@ -179,9 +179,10 @@ class Upload(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if self.file:
-            self.filename = os.path.split(self.file.name)[1]
-            self.filesize = self.file.size
+        if not self.id:
+            if self.file:
+                self.filename = os.path.split(self.file.name)[1]
+                self.filesize = self.file.size
         super(Upload, self).save(*args, **kwargs)
 
     class Meta:

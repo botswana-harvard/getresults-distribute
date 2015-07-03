@@ -10,21 +10,27 @@
 import magic
 import os
 import pwd
+import watchdog
 
 from django.conf import settings
+from django.core.files import File
+from django.forms import ValidationError
 from django.test.testcases import TestCase
-from paramiko import AuthenticationException
+
+from paramiko import AuthenticationException, SSHClient
 from reportlab.pdfgen import canvas
 
-from getresults_dst.event_handlers import RemoteFolderEventHandler
-from getresults_dst.folder_handlers import BaseLookupFolderHandler
+from getresults_dst.event_handlers import RemoteFolderEventHandler, LocalFolderEventHandler
+from getresults_dst.folder_handlers import BaseLookupFolderHandler, BaseFolderHandler
 from getresults_dst.server import Server
 from getresults_dst.utils import load_remote_folders_from_csv
 from getresults_dst.log_line_readers import BaseLineReader
 from getresults_dst.log_reader import LogReader
+from getresults_dst.forms import UploadForm
+from getresults_dst.models import Upload, History
 
 
-class Tests(TestCase):
+class BaseTestCase(TestCase):
 
     def create_temp_txt(self, filename, text=None):
         with open(filename, 'w') as f:
@@ -44,6 +50,27 @@ class Tests(TestCase):
                     os.remove(name)
                 except IOError:
                     pass
+
+    def upload_remote_file_event(self, server, filename):
+        with open(os.path.join(server.event_handler.source_dir, filename), 'rb') as f:
+            upload = Upload()
+            upload.file.name = File(f).name
+            upload.save()
+        event = watchdog.events.FileCreatedEvent(os.path.join(server.event_handler.source_dir, filename))
+        with SSHClient() as server.event_handler.ssh:
+            server.event_handler.connect()
+            server.event_handler.on_created(event)
+
+    def upload_file_event(self, server, filename):
+        with open(os.path.join(server.event_handler.source_dir, filename), 'rb') as f:
+            upload = Upload()
+            upload.file.name = File(f).name
+            upload.save()
+        event = watchdog.events.FileCreatedEvent(os.path.join(server.event_handler.source_dir, filename))
+        server.event_handler.on_created(event)
+
+
+class Tests(BaseTestCase):
 
     def test_failed_authentication(self):
         source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
@@ -413,3 +440,53 @@ class Tests(TestCase):
         for index, ln in enumerate(txt):
             match_string = line_reader.on_newline(ln)
             self.assertEquals(match_string, result[index])
+
+    def test_upload_filename_no_change_on_resave(self):
+        load_remote_folders_from_csv()
+        source_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_UPLOAD_FOLDER)
+        destination_dir = os.path.expanduser(settings.GRTX_REMOTE_FOLDER)
+        archive_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_ARCHIVE_FOLDER)
+        filename = '066-12000001-3.pdf'
+        self.create_temp_pdf(os.path.join(source_dir, filename), '066-12000001-3')
+        LocalFolderEventHandler.folder_handler = BaseFolderHandler()
+        event_handler = LocalFolderEventHandler(
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            archive_dir=archive_dir,
+            file_patterns=['*.pdf'],
+            mime_types=['application/pdf'],
+            mkdir_destination=True)
+        server = Server(event_handler)
+
+        self.upload_file_event(server, filename)
+        upload = Upload.objects.get(filename=filename)
+        upload.save()
+        self.assertEquals(upload.filename, filename)
+        self.remove_temp_files([filename], server)
+
+    def test_upload_form_clean(self):
+        load_remote_folders_from_csv()
+        source_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_UPLOAD_FOLDER)
+        destination_dir = os.path.expanduser(settings.GRTX_REMOTE_FOLDER)
+        archive_dir = os.path.join(settings.MEDIA_ROOT, settings.GRTX_ARCHIVE_FOLDER)
+        filename = '066-12000001-3.pdf'
+        self.create_temp_pdf(os.path.join(source_dir, filename), '066-12000001-3')
+        LocalFolderEventHandler.folder_handler = BaseFolderHandler()
+        event_handler = LocalFolderEventHandler(
+            source_dir=source_dir,
+            destination_dir=destination_dir,
+            archive_dir=archive_dir,
+            file_patterns=['*.pdf'],
+            mime_types=['application/pdf'],
+            mkdir_destination=True)
+        server = Server(event_handler)
+
+        self.upload_file_event(server, filename)
+        self.assertIsInstance(Upload.objects.get(filename=filename), Upload)
+        self.assertIsInstance(History.objects.get(filename=filename), History)
+        self.assertRaises(ValidationError, UploadForm().raise_if_upload, filename)
+        self.assertRaises(ValidationError, UploadForm().raise_if_history, filename)
+        upload = Upload.objects.get(filename=filename)
+        upload.save()
+        self.assertEquals(upload.filename, filename)
+        self.remove_temp_files([filename], server)
