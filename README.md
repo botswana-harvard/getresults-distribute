@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/botswana-harvard/getresults-distribute.svg)](https://travis-ci.org/botswana-harvard/getresults-distribute)
 [![Code Health](https://landscape.io/github/botswana-harvard/getresults-distribute/develop/landscape.svg?style=flat)](https://landscape.io/github/botswana-harvard/getresults-distribute/develop)
 [![Dependency Status](https://www.versioneye.com/user/projects/558a5b6e306662001e00032e/badge.svg?style=flat)](https://www.versioneye.com/user/projects/558a5b6e306662001e00032e)
-[![Coverage Status](https://coveralls.io/repos/botswana-harvard/getresults-distribute/badge.svg)](https://coveralls.io/r/botswana-harvard/getresults-distribute)
+[![Coverage Status](https://coveralls.io/repos/botswana-harvard/getresults-distribute/badge.svg?branch=develop)](https://coveralls.io/r/botswana-harvard/getresults-distribute?branch=develop)
 
 # getresults-distribute
 
