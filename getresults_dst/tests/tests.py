@@ -17,10 +17,11 @@ from paramiko import AuthenticationException
 from reportlab.pdfgen import canvas
 
 from getresults_dst.event_handlers import RemoteFolderEventHandler
-from getresults_dst.file_handlers import RegexPdfFileHandler
 from getresults_dst.folder_handlers import BaseLookupFolderHandler
 from getresults_dst.server import Server
 from getresults_dst.utils import load_remote_folders_from_csv
+from getresults_dst.log_line_readers import BaseLineReader
+from getresults_dst.log_reader import LogReader
 
 
 class Tests(TestCase):
@@ -45,7 +46,7 @@ class Tests(TestCase):
                     pass
 
     def test_failed_authentication(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = '~/' + os.path.join(settings.BASE_DIR.split(os.path.expanduser('~/'))[1], 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         self.assertRaises(
@@ -60,7 +61,7 @@ class Tests(TestCase):
         )
 
     def test_remote_folder(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = '~/' + os.path.join(settings.BASE_DIR.split(os.path.expanduser('~/'))[1], 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
@@ -75,7 +76,7 @@ class Tests(TestCase):
         self.assertEquals(server.event_handler.destination_dir, os.path.join(settings.BASE_DIR, 'testdata/outbox'))
 
     def test_mime_type(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
@@ -88,7 +89,7 @@ class Tests(TestCase):
         self.assertEquals(server.event_handler.mime_types, [b'text/plain'])
 
     def test_folder(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
@@ -104,7 +105,7 @@ class Tests(TestCase):
         self.assertEquals(archive_dir, server.event_handler.archive_dir)
 
     def test_bad_folder(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inboxnnnnn')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/uploadnnnnn')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         self.assertRaises(
@@ -116,7 +117,7 @@ class Tests(TestCase):
             mime_types=['text/plain'],
             file_patterns=['*.txt'],
         )
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outboxttt')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         self.assertRaises(
@@ -128,7 +129,7 @@ class Tests(TestCase):
             mime_types=['text/plain'],
             file_patterns=['*.txt'],
         )
-        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox/archiiive')
+        archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archiiive')
         self.assertRaises(
             FileNotFoundError,
             RemoteFolderEventHandler,
@@ -140,7 +141,7 @@ class Tests(TestCase):
         )
 
     def test_make_local_folder(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         archive_dir = '/tmp/tmp_archive'
         try:
@@ -173,7 +174,7 @@ class Tests(TestCase):
             os.rmdir('/tmp/tmp_getresults_dst_out')
         except IOError:
             pass
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join('/tmp/tmp_getresults_dst_out')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         self.assertRaises(
@@ -211,7 +212,7 @@ class Tests(TestCase):
             pass
 
     def test_filter_listdir_filename_length(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
@@ -235,7 +236,7 @@ class Tests(TestCase):
         self.remove_temp_files([pdf_50_filename, pdf_51_filename, txt_50_filename, txt_51_filename], server)
 
     def test_filter_listdir_txt(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
@@ -255,7 +256,7 @@ class Tests(TestCase):
         self.remove_temp_files([pdf_filename, txt_filename], server)
 
     def test_filter_listdir_pdf(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
@@ -275,7 +276,7 @@ class Tests(TestCase):
         self.remove_temp_files([pdf_filename, txt_filename], server)
 
     def test_filter_listdir_pdf_wrong_mime(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
@@ -295,7 +296,7 @@ class Tests(TestCase):
         self.remove_temp_files([pdf_filename, txt_filename], server)
 
     def test_filter_listdir_unexpected_pattern_for_mime(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = RemoteFolderEventHandler(
@@ -315,7 +316,7 @@ class Tests(TestCase):
         self.remove_temp_files([pdf_filename, txt_filename], server)
 
     def test_converts_mime_type_to_byte(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '066-1200001-3.txt'
@@ -341,7 +342,7 @@ class Tests(TestCase):
 
     def test_folder_handler_no_mkdir(self):
         load_remote_folders_from_csv()
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '066-12000001-3.pdf'
@@ -355,7 +356,9 @@ class Tests(TestCase):
             mime_types=['application/pdf'],
             mkdir_destination=False)
         server = Server(event_handler)
-        folder_selection = BaseLookupFolderHandler().select(server, filename, b'application/pdf', server.event_handler.destination_dir)
+        folder_selection = BaseLookupFolderHandler().select(
+            server, filename, b'application/pdf',
+            server.event_handler.destination_dir)
         self.assertEquals(folder_selection.name, None)
         self.assertEquals(folder_selection.path, None)
         self.assertEquals(folder_selection.tag, None)
@@ -364,3 +367,49 @@ class Tests(TestCase):
         except IOError:
             pass
 
+    def test_log_base_line_reader(self):
+        line_reader = BaseLineReader()
+        ln = ('192.168.125.1 - - [03/Jul/2015:08:42:27 +0200] "GET /owncloud/index.php/apps/files/ajax'
+              '/download.php?dir=%2FViral_Loads%2Fsefophe&files=066-22220024-0.pdf HTTP/1.1" 200 4294 "http'
+              '://10.15.15.2/owncloud/apps/files_pdfviewer/vendor/pdfjs/build/pdf.worker.js?v=0.7" "Mozilla'
+              '/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"')
+        match_string = line_reader.on_newline(ln)
+        self.assertEquals(match_string, '.pdf')
+
+    def test_log_reader(self):
+        txt = ('192.168.125.1 - - [03/Jul/2015:08:42:27 +0200] "GET /owncloud/index.php/apps/files/ajax'
+               '/download.php?dir=%2FViral_Loads%2Fsefophe&files=066-22220024-0.pdf HTTP/1.1" 200 4294 "http'
+               '://10.15.15.2/owncloud/apps/files_pdfviewer/vendor/pdfjs/build/pdf.worker.js?v=0.7" "Mozilla'
+               '/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"')
+        log_filename = os.path.join(settings.MEDIA_ROOT, 'test.log')
+        self.create_temp_txt(log_filename, txt)
+        log_reader = LogReader(BaseLineReader, None, None, log_filename)
+        lastpos = log_reader.read()
+        self.assertEquals(log_reader.last_read, '.pdf')
+        self.assertEquals(lastpos, len(txt))
+        try:
+            os.remove(log_filename)
+        except IOError:
+            pass
+
+    def test_line_reader_multiple_regex(self):
+        txt = [
+            ('192.168.125.1 - - [03/Jul/2015:08:42:27 +0200] "GET /owncloud/index.php/apps/files/ajax'
+             '/download.php?dir=%2FViral_Loads%2Fsefophe&files=066-22220024-0.pdf HTTP/1.1" 200 4294 "http'
+             '://10.15.15.2/owncloud/apps/files_pdfviewer/vendor/pdfjs/build/pdf.worker.js?v=0.7" "Mozilla'
+             '/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"'),
+            ('192.168.125.1 - - [03/Jul/2015:08:42:27 +0200] "GET /owncloud/index.php/apps/files/ajax'
+             '/download.php?dir=%2FViral_Loads%2Fsefophe&files=erik.csv HTTP/1.1" 200 4294 "http'
+             '://10.15.15.2/owncloud/apps/files_pdfviewer/vendor/pdfjs/build/pdf.worker.js?v=0.7" "Mozilla'
+             '/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"'),
+            ('192.168.125.1 - - [03/Jul/2015:08:42:27 +0200] "GET /owncloud/index.php/apps/files/ajax'
+             '/download.php?dir=%2FViral_Loads%2Fsefophe&files=erik.txt HTTP/1.1" 200 4294 "http'
+             '://10.15.15.2/owncloud/apps/files_pdfviewer/vendor/pdfjs/build/pdf.worker.js?v=0.7" "Mozilla'
+             '/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"'),
+        ]
+        BaseLineReader.regexes = [r'\.txt', r'\.pdf', r'\.csv']
+        line_reader = BaseLineReader()
+        result = ['.pdf', '.csv', '.txt']
+        for index, ln in enumerate(txt):
+            match_string = line_reader.on_newline(ln)
+            self.assertEquals(match_string, result[index])

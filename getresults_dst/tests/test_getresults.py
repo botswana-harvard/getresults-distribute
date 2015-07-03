@@ -20,10 +20,11 @@ from getresults_dst.server import Server
 from getresults_dst.utils import load_remote_folders_from_csv
 from getresults_dst.file_handlers import BaseFileHandler
 from paramiko.client import SSHClient
-from getresults_dst.getresults.file_handlers import (
-    GrBhsFileHandler, GrCdc1FileHandler, GrCdc2FileHandler, GrFileHandler)
+from getresults_dst.getresults import GrLogLineReader, GrFileHandler
+from getresults_dst.getresults.file_handlers import GrBhsFileHandler, GrCdc1FileHandler, GrCdc2FileHandler
 from getresults_dst.models import History, Upload
 from getresults_dst.actions import update_on_sent_action
+from getresults_dst.log_reader import LogReader
 
 
 class TestGetresults(TestCase):
@@ -49,7 +50,7 @@ class TestGetresults(TestCase):
 
     def test_folder_handler_load_remotes_mkdir(self):
         load_remote_folders_from_csv()
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '066-12000001-3.pdf'
@@ -83,7 +84,7 @@ class TestGetresults(TestCase):
 
     def test_folder_handler_load_remotes_exists(self):
         load_remote_folders_from_csv()
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         remote_folder = os.path.join(destination_dir, 'digawana')
@@ -121,7 +122,7 @@ class TestGetresults(TestCase):
 
     def test_file_handler_bhs(self):
         load_remote_folders_from_csv()
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '066-12000001-3.pdf'
@@ -146,7 +147,7 @@ class TestGetresults(TestCase):
 
     def test_file_handler_cdc1(self):
         load_remote_folders_from_csv()
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '123-4567.pdf'
@@ -171,11 +172,11 @@ class TestGetresults(TestCase):
 
     def test_file_handler_cdc2(self):
         load_remote_folders_from_csv()
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
-        filename = '12-345-67-89.pdf'
-        self.create_temp_pdf(os.path.join(source_dir, filename), '12-345-67-89')
+        filename = '12-34-567-89.pdf'
+        self.create_temp_pdf(os.path.join(source_dir, filename), '12-34-567-89')
         self.assertEqual(magic.from_file(os.path.join(source_dir, filename), mime=True), b'application/pdf')
         event_handler = GrRemoteFolderEventHandler(
             file_handler=GrCdc2FileHandler,
@@ -188,7 +189,7 @@ class TestGetresults(TestCase):
         server = Server(event_handler)
         server.event_handler.file_handler.process(source_dir, filename, b'application/pdf')
         self.assertTrue(server.event_handler.file_handler.process(source_dir, filename, b'application/pdf'))
-        self.assertEquals(server.event_handler.file_handler.match_string, '12-345-67-89')
+        self.assertEquals(server.event_handler.file_handler.match_string, '12-34-567-89')
         self.assertEquals(server.event_handler.folder_handler.bhs_folder_tag_func(filename, b'application/pdf'), None)
         self.assertEquals(server.event_handler.folder_handler.cdc1_folder_tag_func(filename, b'application/pdf'), None)
         self.assertEquals(server.event_handler.folder_handler.cdc2_folder_tag_func(filename, b'application/pdf'), '34')
@@ -196,7 +197,7 @@ class TestGetresults(TestCase):
 
     def test_folder_handler_bhs_selects_tag(self):
         load_remote_folders_from_csv()
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '066-12000001-3.pdf'
@@ -218,7 +219,7 @@ class TestGetresults(TestCase):
 
     def test_folder_handler_cdc1_selects_tag(self):
         load_remote_folders_from_csv()
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '123-4567.pdf'
@@ -241,11 +242,11 @@ class TestGetresults(TestCase):
 
     def test_folder_handler_cdc2_selects_tag(self):
         load_remote_folders_from_csv()
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
-        filename = '12-345-67-89.pdf'
-        self.create_temp_pdf(os.path.join(source_dir, filename), '12-345-67-89')
+        filename = '12-34-567-89.pdf'
+        self.create_temp_pdf(os.path.join(source_dir, filename), '12-34-567-89')
         self.assertEqual(magic.from_file(os.path.join(source_dir, filename), mime=True), b'application/pdf')
         event_handler = GrRemoteFolderEventHandler(
             file_handler=GrCdc2FileHandler,
@@ -263,11 +264,11 @@ class TestGetresults(TestCase):
 
     def test_folder_handler_all_selects_tag(self):
         load_remote_folders_from_csv()
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '066-12000001-3.pdf'
-        self.create_temp_pdf(os.path.join(source_dir, filename), '12-345-67-89')
+        self.create_temp_pdf(os.path.join(source_dir, filename), '12-34-567-89')
         self.assertEqual(magic.from_file(os.path.join(source_dir, filename), mime=True), b'application/pdf')
         event_handler = GrRemoteFolderEventHandler(
             file_handler=GrFileHandler,
@@ -283,20 +284,20 @@ class TestGetresults(TestCase):
         self.assertEquals(server.event_handler.folder_handler.cdc2_folder_tag_func(filename, b'application/pdf'), None)
         self.remove_temp_files([os.path.join(source_dir, filename)], server)
         filename = '123-4567.pdf'
-        self.create_temp_pdf(os.path.join(source_dir, filename), '12-345-67-89')
+        self.create_temp_pdf(os.path.join(source_dir, filename), '12-34-567-89')
         self.assertEquals(server.event_handler.folder_handler.bhs_folder_tag_func(filename, b'application/pdf'), None)
         self.assertEquals(server.event_handler.folder_handler.cdc1_folder_tag_func(filename, b'application/pdf'), '23')
         self.assertEquals(server.event_handler.folder_handler.cdc2_folder_tag_func(filename, b'application/pdf'), None)
         self.remove_temp_files([os.path.join(source_dir, filename)], server)
-        filename = '12-345-67-89.pdf'
-        self.create_temp_pdf(os.path.join(source_dir, filename), '12-345-67-89')
+        filename = '12-34-567-89.pdf'
+        self.create_temp_pdf(os.path.join(source_dir, filename), '12-34-567-89')
         self.assertEquals(server.event_handler.folder_handler.bhs_folder_tag_func(filename, b'application/pdf'), None)
         self.assertEquals(server.event_handler.folder_handler.cdc1_folder_tag_func(filename, b'application/pdf'), None)
         self.assertEquals(server.event_handler.folder_handler.cdc2_folder_tag_func(filename, b'application/pdf'), '34')
         self.remove_temp_files([os.path.join(source_dir, filename)], server)
 
     def test_filter_listdir_pdf_with_bhs_filehandler(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = GrRemoteFolderEventHandler(
@@ -309,7 +310,7 @@ class TestGetresults(TestCase):
         )
         server = Server(event_handler)
         pdf_filenames = [
-            'tmp.pdf', '066-12345678-9.pdf', '12-345-67-89.pdf', '123-4567.pdf', '1234567.pdf', '123456789.pdf']
+            'tmp.pdf', '066-12345678-9.pdf', '12-34-567-89.pdf', '123-4567.pdf', '1234567.pdf', '123456789.pdf']
         txt_filename = 'tmp.txt'
         for pdf_filename in pdf_filenames:
             self.create_temp_pdf(os.path.join(source_dir, pdf_filename))
@@ -318,14 +319,14 @@ class TestGetresults(TestCase):
         self.assertNotIn('tmp.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
         self.assertNotIn('1234567.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
         self.assertNotIn('123456789.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
-        self.assertNotIn('12-345-67-89.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
+        self.assertNotIn('12-34-567-89.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
         self.assertNotIn('123-4567.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
         self.assertIn('066-12345678-9.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
         self.remove_temp_files(pdf_filenames + [txt_filename], server)
 
     def test_knows_folder_using_cdc1_file_handler(self):
         load_remote_folders_from_csv()
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         filename = '113-4567.pdf'
@@ -359,10 +360,10 @@ class TestGetresults(TestCase):
 
     def test_knows_folder_using_cdc2_file_handler(self):
         load_remote_folders_from_csv()
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/viral_load')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
-        filename = '12-345-67-89.pdf'
+        filename = '12-34-567-89.pdf'
         self.create_temp_pdf(os.path.join(source_dir, filename))
         self.assertEqual(magic.from_file(os.path.join(source_dir, filename), mime=True), b'application/pdf')
         event_handler = GrRemoteFolderEventHandler(
@@ -392,7 +393,7 @@ class TestGetresults(TestCase):
             pass
 
     def test_filter_listdir_pdf_with_grfilehandler(self):
-        source_dir = os.path.join(settings.BASE_DIR, 'testdata/inbox')
+        source_dir = os.path.join(settings.BASE_DIR, 'testdata/upload')
         destination_dir = os.path.join(settings.BASE_DIR, 'testdata/outbox')
         archive_dir = os.path.join(settings.BASE_DIR, 'testdata/archive')
         event_handler = GrRemoteFolderEventHandler(
@@ -404,7 +405,7 @@ class TestGetresults(TestCase):
         )
         server = Server(event_handler)
         pdf_filenames = [
-            'tmp.pdf', '066-12345678-9.pdf', '12-345-67-89.pdf', '123-4567.pdf', '1234567.pdf', '123456789.pdf']
+            'tmp.pdf', '066-12345678-9.pdf', '12-34-567-89.pdf', '123-4567.pdf', '1234567.pdf', '123456789.pdf']
         txt_filename = 'tmp.txt'
         for pdf_filename in pdf_filenames:
             self.create_temp_pdf(os.path.join(source_dir, pdf_filename))
@@ -414,7 +415,7 @@ class TestGetresults(TestCase):
         self.assertNotIn('1234567.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
         self.assertNotIn('123456789.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
         self.assertIn('066-12345678-9.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
-        self.assertIn('12-345-67-89.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
+        self.assertIn('12-34-567-89.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
         self.assertIn('123-4567.pdf', server.event_handler.filtered_listdir(listdir, source_dir))
         self.remove_temp_files(pdf_filenames + [txt_filename], server)
 
@@ -469,3 +470,50 @@ class TestGetresults(TestCase):
 
         self.remove_temp_files([os.path.join(source_dir, filename)], server)
         self.remove_temp_files([os.path.join(archive_dir, filename)], server)
+
+    def test_gr_line_reader_multiple_regex(self):
+        txt = [
+            ('192.168.125.1 - - [03/Jul/2015:08:42:27 +0200] "GET /owncloud/index.php/apps/files/ajax'
+             '/download.php?dir=%2FViral_Loads%2Fsefophe&files=066-22220024-0.pdf HTTP/1.1" 200 4294 "http'
+             '://10.15.15.2/owncloud/apps/files_pdfviewer/vendor/pdfjs/build/pdf.worker.js?v=0.7" "Mozilla'
+             '/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"'),
+            ('192.168.125.1 - - [03/Jul/2015:08:42:27 +0200] "GET /owncloud/index.php/apps/files/ajax'
+             '/download.php?dir=%2FViral_Loads%2Fsefophe&files=123-4567.pdf HTTP/1.1" 200 4294 "http'
+             '://10.15.15.2/owncloud/apps/files_pdfviewer/vendor/pdfjs/build/pdf.worker.js?v=0.7" "Mozilla'
+             '/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"'),
+            ('192.168.125.1 - - [03/Jul/2015:08:42:27 +0200] "GET /owncloud/index.php/apps/files/ajax'
+             '/download.php?dir=%2FViral_Loads%2Fsefophe&files=12-34-567-89.pdf HTTP/1.1" 200 4294 "http'
+             '://10.15.15.2/owncloud/apps/files_pdfviewer/vendor/pdfjs/build/pdf.worker.js?v=0.7" "Mozilla'
+             '/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"'),
+        ]
+        line_reader = GrLogLineReader()
+        result = ['066-22220024-0.pdf', '123-4567.pdf', '12-34-567-89.pdf']
+        for index, ln in enumerate(txt):
+            match_string, _, _, _ = line_reader.on_newline(ln)
+            self.assertEquals(match_string, result[index])
+
+    def test_gr_log_reader(self):
+        txt = ('192.168.125.1 - - [03/Jul/2015:08:42:27 +0200] "GET /owncloud/index.php/apps/files/ajax'
+               '/download.php?dir=%2FViral_Loads%2Fsefophe&files=066-22220024-0.pdf HTTP/1.1" 200 4294 "http'
+               '://10.15.15.2/owncloud/apps/files_pdfviewer/vendor/pdfjs/build/pdf.worker.js?v=0.7" "Mozilla'
+               '/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"\n'
+               '192.168.125.1 - - [03/Jul/2015:08:42:27 +0200] "GET /owncloud/index.php/apps/files/ajax'
+               '/download.php?dir=%2FViral_Loads%2Fsefophe&files=123-4567.pdf HTTP/1.1" 200 4294 "http'
+               '://10.15.15.2/owncloud/apps/files_pdfviewer/vendor/pdfjs/build/pdf.worker.js?v=0.7" "Mozilla'
+               '/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"\n'
+               '192.168.125.1 - - [03/Jul/2015:08:42:27 +0200] "GET /owncloud/index.php/apps/files/ajax'
+               '/download.php?dir=%2FViral_Loads%2Fsefophe&files=12-34-567-89.pdf HTTP/1.1" 200 4294 "http'
+               '://10.15.15.2/owncloud/apps/files_pdfviewer/vendor/pdfjs/build/pdf.worker.js?v=0.7" "Mozilla'
+               '/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"\n'
+               )
+
+        log_filename = os.path.join(settings.MEDIA_ROOT, 'test.log')
+        self.create_temp_txt(log_filename, txt)
+        log_reader = LogReader(GrLogLineReader, None, None, log_filename)
+        lastpos = log_reader.read()
+        self.assertEquals(log_reader.last_read[0], '12-34-567-89.pdf')
+        self.assertEquals(lastpos, len(txt))
+        try:
+            os.remove(log_filename)
+        except IOError:
+            pass

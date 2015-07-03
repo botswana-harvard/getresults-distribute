@@ -12,7 +12,7 @@ import sys
 from django.utils import timezone
 from paramiko import SFTPClient, SSHClient
 
-from .line_readers import BaseLineReader
+from .log_line_readers import BaseLineReader
 from .models import LogReaderHistory
 from .mixins import SSHConnectMixin
 
@@ -20,11 +20,12 @@ from .mixins import SSHConnectMixin
 class LogReader (SSHConnectMixin):
 
     def __init__(self, line_reader, hostname, user, path, timeout=None):
+        self.last_read = None
         self.hostname = hostname or 'localhost'
         self.timeout = timeout or 5.0
         self.remote_user = user
         self.line_reader = line_reader() or BaseLineReader()
-        self.path = path
+        self.path = path  # basedir + filename
         self.trusted_host = True
         self.filestat = None
         self.exception_count = 0
@@ -52,7 +53,7 @@ class LogReader (SSHConnectMixin):
                     with sftp.open(self.path) as f:
                         f.seek(lastpos)
                         for line_number, line in enumerate(f):
-                            self.line_reader.on_newline(line)
+                            self.last_read = self.line_reader.on_newline(line)
                             lastpos = f.tell()
         except KeyboardInterrupt:
             sys.stdout.write('Stopped at {} for {}@{}:{}\n'.format(

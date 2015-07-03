@@ -22,6 +22,13 @@ tz = pytz.timezone(settings.TIME_ZONE)
 
 class BaseLineReader(object):
 
+    regexes = [r'\.pdf|\.txt|\.csv']
+
+    def __init__(self):
+        if not isinstance(self.regexes, (list, tuple)):
+            self.regexes = [self.regexes]
+        self.patterns = [re.compile(regex) for regex in self.regexes]
+
     def read(self, ln, lastpos, line_number, log_reader_history):
         """Read the line into the values dictionary and call on_match if there is a match."""
         self.on_newline(ln)
@@ -34,10 +41,17 @@ class BaseLineReader(object):
 
     def on_newline(self, ln):
         """Called for each new line"""
-        pass
+        for pattern in self.patterns:
+            try:
+                match = re.search(pattern, ln)
+                match_string = match.group()
+                break
+            except AttributeError:
+                match_string = None
+        return match_string
 
 
-class RegexApacheLineReader(object):
+class RegexApacheLineReader(BaseLineReader):
     """ A line reader class that parses a line from an Apache2 access.log file.
 
     You will need to customize the line_parser, pattern and search_field.
@@ -47,10 +61,11 @@ class RegexApacheLineReader(object):
     """
 
     line_parser = make_parser('%a %b %B %t %m %q %H %X %P %r %R')
-    pattern = re.compile(r'\.pdf')
+    regexes = [r'\.pdf']
     search_field = 'query_string'
 
     def __init__(self):
+        super(RegexApacheLineReader, self).__init__()
         self.match_count = 0
         self.exception_count = 0
 
@@ -59,6 +74,7 @@ class RegexApacheLineReader(object):
         match_string, ln, remote_ip, time_received = self.match(ln)
         if match_string:
             self.update_ack_history(ln, remote_ip, match_string, time_received)
+        return match_string, ln, remote_ip, time_received
 
     def match(self, ln):
         """Matches the pattern to the relevant parsed item value and
@@ -68,10 +84,12 @@ class RegexApacheLineReader(object):
             values = self.line_parser(ln)
             remote_ip = values.get('remote_ip', '')
             time_received = values.get('time_received', None)
-            match = re.search(self.pattern, values.get(self.search_field, ''))
-            if match:
-                match_string = match.group()
-                self.match_count += 1
+            for pattern in self.patterns:
+                match = re.search(pattern, values.get(self.search_field, ''))
+                if match:
+                    match_string = match.group()
+                    self.match_count += 1
+                    break
         except LineDoesntMatchException:
             self.exception_count += 1
             pass
