@@ -9,3 +9,4 @@ paramiko
 scp
 reportlab  # for tests only
 pypdf2
+apache_log_parser
