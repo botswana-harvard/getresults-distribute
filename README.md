@@ -1,24 +1,60 @@
+[![Build Status](https://travis-ci.org/botswana-harvard/getresults-distribute.svg)](https://travis-ci.org/botswana-harvard/getresults-distribute)
+[![Code Health](https://landscape.io/github/botswana-harvard/getresults-distribute/develop/landscape.svg?style=flat)](https://landscape.io/github/botswana-harvard/getresults-distribute/develop)
 [![Dependency Status](https://www.versioneye.com/user/projects/558a5b6e306662001e00032e/badge.svg?style=flat)](https://www.versioneye.com/user/projects/558a5b6e306662001e00032e)
+[![Coverage Status](https://coveralls.io/repos/botswana-harvard/getresults-distribute/badge.svg?branch=develop)](https://coveralls.io/r/botswana-harvard/getresults-distribute?branch=develop)
 
-# getresults-tx
+# getresults-distribute
+
+Move files from a folder on server A to a folder on server B. If that's all you want, use `rsync`, otherwise read on.
+
+We need accountability and management as well. This is our scenario:
+
+* Our lab technicians upload result PDFs through the Django interface.
+* `getresults_dst.server` moves and collates the uploaded clinical test results to a set of folders on remote server B. The PDF files are collated according to clinic facility (folder). A secure web resource serves up the PDF files on remote server B, e.g. ownCloud or apache, where each clinic is granted access to their PDF clinical results only.
+* Our lab technicians check their work by confirming uploaded files were sent.
+* The clinic staff access their files (download or view) from their facility. 
+* `getresults_dst` contacts remote server B and scans the apache2 log for evidence that the files were accessed by the clinic.
+
+We need to know that the clinic received the result. So in addition to just moving files, a detailed and searchable audit trail of what is happening is kept:
+* searchable history of uploaded files
+* searchable history of successfully sent files
+* list of files uploaded but not sent (pending files)
+* history of files accessed on server B (acknowledgments)
+* full archive of all files sent
+* searchable archive where each file is viewable through the django interface.
 
 Requires python3. Django 1.7 or 1.8.
 
-For example:
+	>>> python manage.py start_observer
+	
+	Connected to host edc.sample.com.
+
+	Server started on 2015-06-24 14:30:59.665896+00:00
+	patterns: *.pdf
+	mime: application/pdf
+	Upload folder: /home/edc_user/getresults_files/upload
+	Remote folder: remote_user@edc.sample.com:/home/remote_user/viral_load
+	Archive folder: /home/edc_user/getresults_files/archive
+
+	press CTRL-C to stop.
+
+
+Look at the management command code but a very simple example is:
 
     source_dir = os.path.join('~/getresult/upload')
     archive_dir = os.path.join('~/getresult/archive')
     destination_dir = os.path.join(~/getresults')
     
-    server = Server(
+    event_handler = SomeEventHandler(
 		hostname='edc.example.com',
         source_dir=source_dir,
         destination_dir=destination_dir,
         archive_dir=archive_dir,
         mime_types=['application/pdf'],
         file_patterns=['*.pdf'],
-        touch_existing=True,
-        )
+        touch_existing=True)
+    
+    server = Server(event_handler)
     server.observe()
 
 The server events are the `watchdog` events, namely; `on_created()`, `on_modifier()`, `on_moved()` and `on_deleted()`.
@@ -31,19 +67,21 @@ Create your django project.
 
 	django-admin startproject project
 
-Install getresulst-tx
+Install getresults-distribute
 	
-	pip install -e git+https://github.com/botswana-harvard/getresults-tx@develop#g=getresults_tx
+	pip install -e git+https://github.com/botswana-harvard/getresults-distribute@develop#g=getresults_dst
 
 Add to `settings.py`:
 
 	INSTALLED_APPS = (
 	    ...
 	    ...
-	    'getresults_tx',
+	    'getresults_dst',
 	    'project',
 	)
 
+
+	FILE_UPLOAD_PERMISSIONS = 0o664
 
 	MEDIA_URL = '/media/'
 
@@ -59,10 +97,53 @@ Add to `settings.py`:
 
 	# remote folder, if relative, will be expanded 
 	GRTX_REMOTE_FOLDER = '~/viral_load'
+	GRTX_REMOTE_LOGFILE = '/var/log/apache2/access.log'
 
 	# must specify both the pattern and mime type
 	GRTX_FILE_PATTERNS = ['*.pdf']
 	GRTX_MIME_TYPES = ['application/pdf']
+	
+
+Choose your database:
+
+	DATABASES = {...}
+
+Migrate:
+	
+	python manage.py makemigrations getresults_dst
+	python manage.py migrate getresults_dst
+
+Copy your ssh keys to the remote server:
+
+    ssh-copy-id erikvw@edc.sample.com
+
+Create your folders:
+
+    $ mkdir ~/getresults_files/upload
+    $ mkdir ~/getresults_files/archive
+    $ ssh erikvw@edc.sample.com
+    erikvw@edc.sample.com:~$ mkdir ~/viral_load
+
+Get access rights to read the apache access.log or some part of it.
+    
+    '/var/log/apache2/access.log'
+
+Load the list of remote folders
+
+    python manage.py load_remote_folders
+
+Start up django web server
+
+    python manage.py runserver 0.0.0.0
+
+Start the observer
+
+    python manage.py start_observer
+
+Start the log reader
+
+    python manage.py start_log_reader
+
 
 Folders
 -------
@@ -88,19 +169,16 @@ For example:
 
     import pwd
     
-    from getresults_tx.server import Server
-    from getresults_tx.event_handlers import RemoteFolderEventHandler
-    from getresults_tx.folder_handlers import FolderHandler
+    from getresults_dst.server import Server
+    from getresults_dst.event_handlers import RemoteFolderEventHandler
+    from getresults_dst.folder_handlers import FolderHandler
     
-    source_dir = '~/source/getresults-tx/getresults_tx/testdata/inbox/'
-    destination_dir = '~/source/getresults-tx/getresults_tx/testdata/viral_load/'
-    archive_dir = '~/source/getresults-tx/getresults_tx/testdata/archive/'
+    source_dir = '~/source/getresults-distribute/getresults_dst/testdata/inbox/'
+    destination_dir = '~/source/getresults-distribute/getresults_dst/testdata/viral_load/'
+    archive_dir = '~/source/getresults-distribute/getresults_dst/testdata/archive/'
     
-    RemoteFolderEventHandler.folder_handler=FolderHandler()
-    remote_user = pwd.getpwuid(os.getuid()).pw_name
-    
-    server = Server(
-        RemoteFolderEventHandler,
+    event_handler = RemoteFolderEventHandler(
+		folder_handler=FolderHandler,    
         hostname='localhost',
         remote_user=remote_user,
         source_dir=source_dir,
@@ -110,6 +188,7 @@ For example:
         file_patterns=['*.pdf'],
         touch_existing=True,
         mkdir_remote=True)
+    server = Server(event_handler)
     server.observe()
 
 Folder Handlers
@@ -132,7 +211,48 @@ is a clinical test result. The PDF filenames are either a `specimen_identifier` 
 values must appear somewhere in the clinical test result. By checking the text we minimize the chance of
 sending an incorrectly named PDF file.
     
+    
+Log Reader
+----------
+
+The log reader uses `apache_log_parser` to parse a local or remote apache log. See the management command `start_log_reader`. We put this in a cron job. On the next parse event, the log reader starts where it left off (`lastpos`).
+
+	#!/bin/bash
+	. ~/.virtualenvs/django18/bin/activate
+	cd ~/source/getresults-distribute
+	python manage.py start_log_reader
+	. ~/.virtualenvs/django18/bin/deactivate
+	exit 0
+
+Line Readers
+------------
+A line reader is passed to the log reader and called per line. For example, the `RegexApacheLineReader` reads a line looking for evidence that a previously sent file was accessed. If a match is found, the `Acknowledgement` model and the `History`
+models are updated. 
+
+
 SSH/SCP
 -------
 
 Files are always transferred using SCP. You need to setup key-based authentication first and check that it works between local and remote machines for the current account. This also applies if the _destination_ folder is on the same host as the _source_ folder.
+
+Deployment on Apache
+--------------------
+
+As shown above, upload permissions used by Django are set to RW-RW-R-
+
+	FILE_UPLOAD_PERMISSIONS = 0o664
+
+Apache uses the www-data user. You cannot run the observer on this account. So you may choose to store files under
+/var/www/data and add the observer account to www-data or store files in the home folder of the observer
+and add www-data to the observer group. For example, if files are in the observer home folder:
+
+	chgrp -R www-data ~/getresults_files/
+	chgrp g+w www-data ~/getresults_files/
+
+You should limit the request size that can be uploaded, `LimitRequestBody`, in the apache conf file, for example:
+
+       Alias /media/ /home/observer/getresults_files/
+        <Directory /home/observer/getresults_files >
+          Require all granted
+          LimitRequestBody 15000
+        </Directory>

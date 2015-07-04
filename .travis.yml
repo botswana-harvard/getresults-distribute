@@ -16,10 +16,22 @@ install:
   - pip install -q -r requirements.txt --use-mirrors
 
 before_script:
-  - flake8 getresults
-
+  - flake8 getresults_dst
+  # Allow us to SSH passwordless to localhost
+  - ssh-keygen -f ~/.ssh/id_rsa -N ""
+  - cp ~/.ssh/{id_rsa.pub,authorized_keys}
+  # Creation of an SSH agent for testing forwarding
+  - eval $(ssh-agent)
+  - ssh-add
 script: 
-  - coverage run --source=getresults manage.py test
+  - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/upload/
+  - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/archive/
+  - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/outbox
+  - mkdir -p /home/travis/build/botswana-harvard/getresults-distribute/getresults_dst/testdata/viral_load
+  - mkdir -p /home/travis/getresults_files/upload
+  - mkdir -p /home/travis/getresults_files/archive
+  - mkdir -p /home/travis/viral_load
+  - coverage run --source=getresults_dst manage.py test
 
 after_success:
   - coveralls

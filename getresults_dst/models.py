@@ -7,6 +7,8 @@
 # you should have received as part of this distribution.
 #
 
+import os
+
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.db import models
@@ -28,10 +30,10 @@ class History(models.Model):
     archive = models.FileField()
 
     hostname = models.CharField(
-        max_length=25)
+        max_length=100)
 
     remote_hostname = models.CharField(
-        max_length=25)
+        max_length=100)
 
     path = models.CharField(
         max_length=200)
@@ -40,13 +42,13 @@ class History(models.Model):
         max_length=200)
 
     remote_folder = models.CharField(
-        max_length=25,
+        max_length=50,
         default='default')
 
-    remote_folder_hint = models.CharField(
-        max_length=10,
+    remote_folder_tag = models.CharField(
+        max_length=25,
         null=True,
-        help_text='if filename is suggestive of the remote folder ...')
+        help_text='e.g. a value in the filename suggestive of the remote folder ...')
 
     archive_path = models.CharField(
         max_length=100,
@@ -68,6 +70,11 @@ class History(models.Model):
 
     sent_datetime = models.DateTimeField()
 
+    acknowledged = models.BooleanField(
+        default=False,
+        blank=True,
+    )
+
     ack_datetime = models.DateTimeField(
         null=True,
         blank=True)
@@ -81,7 +88,7 @@ class History(models.Model):
         max_length=50)
 
     class Meta:
-        app_label = 'getresults_tx'
+        app_label = 'getresults_dst'
         ordering = ('-sent_datetime', )
         verbose_name = 'Sent History'
         verbose_name_plural = 'Sent History'
@@ -95,19 +102,19 @@ class RemoteFolder(models.Model):
     base_path = models.CharField(
         max_length=200)
 
-    folder_hint = models.CharField(
+    folder_tag = models.CharField(
         max_length=25,
         default=None,
         blank=True)
 
     label = models.CharField(
         max_length=10,
-        null=True,
-        blank=True)
+        default='default',
+        help_text='key value in folder_tags dictionary.')
 
     class Meta:
-        app_label = 'getresults_tx'
-        unique_together = (('folder', 'base_path'), ('folder', 'folder_hint'))
+        app_label = 'getresults_dst'
+        unique_together = (('folder', 'base_path', 'label'), ('folder', 'folder_tag', 'label'))
         ordering = ('label', 'base_path', 'folder')
         verbose_name = 'Remote Folder Configuration'
 
@@ -172,13 +179,14 @@ class Upload(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if self.file:
-            self.filename = self.file.name
-            self.filesize = self.file.size
+        if not self.id:
+            if self.file:
+                self.filename = os.path.split(self.file.name)[1]
+                self.filesize = self.file.size
         super(Upload, self).save(*args, **kwargs)
 
     class Meta:
-        app_label = 'getresults_tx'
+        app_label = 'getresults_dst'
         ordering = ('-upload_datetime', )
 
 
@@ -197,15 +205,76 @@ class Pending(models.Model):
     filetimestamp = models.DateTimeField()
 
     class Meta:
-        app_label = 'getresults_tx'
+        app_label = 'getresults_dst'
         ordering = ('filename', )
         verbose_name = 'Pending File'
         verbose_name_plural = 'Pending Files'
 
-# @receiver(post_save, weak=False, dispatch_uid="enrollment_checklist_on_post_save")
-# def update_mime_type_post_save(sender, instance, raw, created, using, **kwargs):
-#     if not raw:
-#         if isinstance(instance, Upload):
-#             f = instance.file.open()
-#             instance.mime_type = magic.from_file(f, mime=True)
-#             f.close()
+
+class Acknowledgment(models.Model):
+
+    filename = models.CharField(
+        max_length=50
+    )
+
+    ack_user = models.CharField(
+        max_length=50
+    )
+
+    ack_datetime = models.DateTimeField()
+
+    ack_string = models.TextField(
+        max_length=500
+    )
+
+    in_sent_history = models.BooleanField(
+        default=False,
+        help_text='True if ACK can be linked to sent history')
+
+    created = models.DateTimeField(
+        default=timezone.now
+    )
+
+    class Meta:
+        app_label = 'getresults_dst'
+        ordering = ('-ack_datetime', )
+
+
+class AcknowledgmentUser(models.Model):
+
+    ack_user = models.CharField(
+        max_length=50,
+        unique=True,
+    )
+
+    remote_folder = models.ForeignKey(RemoteFolder)
+
+    created = models.DateTimeField(
+        default=timezone.now
+    )
+
+    class Meta:
+        app_label = 'getresults_dst'
+        ordering = ('ack_user', )
+
+
+class LogReaderHistory(models.Model):
+
+    lastpos = models.IntegerField()
+
+    lines = models.IntegerField(default=0)
+
+    matches = models.IntegerField(default=0)
+
+    exceptions = models.IntegerField(default=0)
+
+    started = models.DateTimeField(
+        default=timezone.now
+    )
+
+    ended = models.DateTimeField(null=True)
+
+    class Meta:
+        app_label = 'getresults_dst'
+        ordering = ('-started', )
+        verbose_name_plural = 'Log Reader History'

@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2015 Erik van Widenfelt
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 import os
 import re
 
@@ -8,6 +17,9 @@ from .constants import PDF
 
 
 class BaseFileHandler(object):
+
+    def __init__(self, **kwargs):
+        pass
 
     def process(self, *args):
         return True
@@ -27,23 +39,29 @@ class RegexPdfFileHandler(BaseFileHandler):
     """
     regex = None
 
-    def __init__(self, regex=None):
-        self.regex = regex or self.regex
+    def __init__(self, **kwargs):
         self.text = None
         self.match_string = None
+        self.pattern = re.compile(self.regex)
+        super(RegexPdfFileHandler, self).__init__(**kwargs)
 
-    def process(self, path, filename, mime_type):
-        pattern = re.compile(self.regex)
-        match = re.match(pattern, filename)
+    def __repr__(self):
+        return '{}()\'{}\''.format(self.__class__.__name__, self.regex)
+
+    def __str__(self):
+        return '{}'.format(self.regex)
+
+    def process(self, basedir, filename, mime_type):
+        match = re.match(self.pattern, filename)
         if mime_type == PDF and match:
             self.match_string = match.group()
-            if self.match_string in self.pdf_to_text(filename, path):
+            if self.match_string in self.pdf_to_text(basedir, filename):
                 return True
         return False
 
-    def pdf_to_text(self, filename, path):
+    def pdf_to_text(self, basedir, filename):
         self.text = ''
-        path = os.path.join(path, filename)
+        path = os.path.join(basedir, filename)
         with open(path, "rb") as f:
             try:
                 pdf_file_reader = PdfFileReader(f)

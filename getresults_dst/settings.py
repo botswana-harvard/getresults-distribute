@@ -47,7 +47,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'getresults_tx',
+    'getresults_dst',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -61,7 +61,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.security.SecurityMiddleware',
 )
 
-ROOT_URLCONF = 'getresults_tx.urls'
+ROOT_URLCONF = 'getresults_dst.urls'
 
 TEMPLATES = [
     {
@@ -81,17 +81,17 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'getresults_tx.wsgi.application'
+WSGI_APPLICATION = 'getresults_dst.wsgi.application'
 
 
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
 # DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#    }
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     }
 # }
 
 DATABASES = {
@@ -99,7 +99,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'gr',
         'USER': 'postgres',
-        'PASSWORD': 'postgres',
+        'PASSWORD': 'cc3721b',
         'HOST': 'localhost',
         'PORT': '',
     }
@@ -134,8 +134,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR.child('static')
-
+# STATIC_ROOT = BASE_DIR.child('static')
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "static"),
+)
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
@@ -145,19 +147,17 @@ STATICFILES_FINDERS = (
 )
 
 GIT_DIR = BASE_DIR.ancestor(1)
+# MEDIA_ROOT = os.path.expanduser('~/source/getresults-distribute/getresults_dst/testdata')
 MEDIA_ROOT = os.path.expanduser('~/getresults_files/')
 MEDIA_URL = '/media/'
+FILE_UPLOAD_PERMISSIONS = 0o664
 
 # local folders are relative to MEDIA_ROOT
-GRTX_REMOTE_HOSTNAME = '10.15.15.2'
-GRTX_REMOTE_USERNAME = 'bhsharvard'
-# GRTX_REMOTE_HOSTNAME = '192.168.1.84'
-# GRTX_REMOTE_USERNAME = 'erikvw'
-# GRTX_REMOTE_HOSTNAME = 'edc4.bhp.org.bw'
-# GRTX_REMOTE_HOSTNAME = '192.168.1.22'
-# GRTX_REMOTE_USERNAME = 'erikvw'
+GRTX_REMOTE_HOSTNAME = 'localhost'
+GRTX_REMOTE_USERNAME = 'erikvw'
 GRTX_UPLOAD_FOLDER = 'upload/'
 GRTX_REMOTE_FOLDER = '~/viral_load'
 GRTX_ARCHIVE_FOLDER = 'archive/'
 GRTX_FILE_PATTERNS = ['*.pdf']
 GRTX_MIME_TYPES = ['application/pdf']
+GRTX_REMOTE_LOGFILE = '/Users/erikvw/source/getresults-tx/getresults_dst/testdata/access.log'
