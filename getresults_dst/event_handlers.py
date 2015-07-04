@@ -17,7 +17,7 @@ import socket
 import string
 
 from builtins import (
-    IsADirectoryError, FileNotFoundError, PermissionError)
+    IsADirectoryError, FileNotFoundError, PermissionError, FileExistsError)
 from datetime import datetime
 from paramiko import SFTPClient, SSHClient
 from scp import SCPClient, SCPException
