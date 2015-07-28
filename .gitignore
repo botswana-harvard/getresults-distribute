@@ -7,6 +7,7 @@ __pycache__/
 test-*
 db.sqlite3
 etc/*
+getresults_dst/migrations/
 getresults_dst/testdata/
 getresults_dst/testdata/inbox/
 getresults_dst/testdata/outbox/

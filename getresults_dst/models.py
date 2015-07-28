@@ -27,7 +27,7 @@ STATUS = (
 
 class History(models.Model):
 
-    archive = models.FileField()
+    archive = models.FileField(upload_to='upload')
 
     hostname = models.CharField(
         max_length=100)
