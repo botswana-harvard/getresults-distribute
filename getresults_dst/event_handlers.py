@@ -16,6 +16,9 @@ import shutil
 import socket
 import string
 
+from os.path import join, exists, isfile, expanduser, split
+from os import listdir
+
 from builtins import (
     IsADirectoryError, FileNotFoundError, PermissionError, FileExistsError)
 from datetime import datetime
@@ -58,14 +61,16 @@ class BaseEventHandler(PatternMatchingEventHandler):
         event.src_path
             path/to/observed/file
     """
-    def __init__(self, hostname=None, remote_user=None, trusted_host=None):
+    def __init__(self, hostname=None, remote_user=None, trusted_host=None, verbose=None):
         super(BaseEventHandler, self).__init__(ignore_directories=True)
         self.hostname = hostname or 'localhost'
         self.remote_user = remote_user or pwd.getpwuid(os.getuid()).pw_name
         self.trusted_host = True if (trusted_host or self.hostname == 'localhost') else False
+        self.verbose = True if verbose is None else verbose
 
     def process(self, event):
-        print('{} {} {} Not handled.'.format(timezone.now(), event.event_type, event.src_path))
+        self.output_to_console(
+            '{} {} {} Not handled.'.format(timezone.now(), event.event_type, event.src_path))
 
     def on_modified(self, event):
         self.process(event)
@@ -78,6 +83,10 @@ class BaseEventHandler(PatternMatchingEventHandler):
 
     def on_moved(self, event):
         self.process(event)
+
+    def output_to_console(self, msg):
+        if self.verbose:
+            print(msg)
 
 
 class FolderEventHandler(BaseEventHandler):
@@ -146,29 +155,45 @@ class FolderEventHandler(BaseEventHandler):
         self.process_on_added(event)
 
     def on_modified(self, event):
-        if os.path.exists(event.src_path):
+        if exists(event.src_path):
             self.process_on_added(event)
+
+    def process_existing_files(self):
+        """Process existing files on startup."""
+        self.output_to_console(
+            '{} {}.'.format(timezone.now(), 'processing existing files on start...'))
+        for src_path in self.matching_files:
+            FakeEvent = type('event', (object, ), {'event_type': 'exists', 'src_path': src_path})
+            self.process_on_added(FakeEvent())
+        self.output_to_console('{} done processing existing files.'.format(timezone.now()))
+        self.output_to_console('{} waiting ...'.format(timezone.now()))
+
+    @property
+    def matching_files(self):
+        for file_pattern in self.patterns:
+            for file in filter(listdir(self.source_dir), file_pattern):
+                yield join(self.source_dir, file)
 
     def process_on_added(self, event):
         """Moves file from source_dir to the destination_dir as
         determined by :func:`folder_handler.select`."""
-        print('{} {} {}'.format(timezone.now(), event.event_type, event.src_path))
+        self.output_to_console('{} {} {}'.format(timezone.now(), event.event_type, event.src_path))
         filename = event.src_path.split('/')[-1:][0]
-        path = os.path.join(self.source_dir, filename)
+        path = join(self.source_dir, filename)
         mime_type = magic.from_file(path, mime=True)
         if mime_type in self.mime_types:
             folder_selection = self.folder_handler.select(self, filename, mime_type, self.destination_dir)
             if not folder_selection.path:
-                print('Copy failed. Unable to \'select\' remote folder for {}'.format(filename))
+                self.output_to_console('Copy failed. Unable to \'select\' remote folder for {}'.format(filename))
                 return None
             else:
                 fileinfo = self.copy_to_folder(filename, folder_selection.path)
                 if fileinfo:
-                    path = os.path.join(self.source_dir, filename)
+                    path = join(self.source_dir, filename)
                     if self.archive_dir:
                         fileinfo['archive_filename'] = self.archive_filename(filename)
                         self.update_history(fileinfo, TX_SENT, folder_selection, mime_type)
-                        os.rename(path, os.path.join(self.archive_dir, fileinfo['archive_filename']))
+                        os.rename(path, join(self.archive_dir, fileinfo['archive_filename']))
                     else:
                         os.remove(path)
 
@@ -181,9 +206,9 @@ class FolderEventHandler(BaseEventHandler):
     def copy_to_folder(self, filename, destination_dir):
         """Copies file to the destination path and
         archives if the archive_dir has been specified."""
-        source_filename = os.path.join(self.source_dir, filename)
-        destination_filename = os.path.join(destination_dir, filename)
-        if not os.path.isfile(source_filename):
+        source_filename = join(self.source_dir, filename)
+        destination_filename = join(destination_dir, filename)
+        if not isfile(source_filename):
             return None
         fileinfo = self.statinfo(self.source_dir, filename)
         try:
@@ -194,9 +219,9 @@ class FolderEventHandler(BaseEventHandler):
 
     def check_local_path(self, path):
         """Returns the path or raises an Exception if path does not exist locally."""
-        path = os.path.expanduser(path)
+        path = expanduser(path)
         path = path[:-1] if path.endswith('/') else path
-        if not os.path.exists(path):
+        if not exists(path):
             if self.mkdir_local:
                 os.makedirs(path)
             else:
@@ -215,7 +240,7 @@ class FolderEventHandler(BaseEventHandler):
         return path
 
     def statinfo(self, path, filename):
-        statinfo = os.stat(os.path.join(self.source_dir, filename))
+        statinfo = os.stat(join(self.source_dir, filename))
         return {
             'path': path,
             'filename': filename,
@@ -254,7 +279,7 @@ class FolderEventHandler(BaseEventHandler):
 
     def touch_files(self):
         for filename in self.filtered_listdir(os.listdir(self.source_dir), self.source_dir):
-            touch(os.path.join(self.source_dir, filename))
+            touch(join(self.source_dir, filename))
 
     def update_file_mode(self, mode):
         """Updates file mode of and touches existing files ."""
@@ -262,7 +287,7 @@ class FolderEventHandler(BaseEventHandler):
         for filename in self.filtered_listdir(os.listdir(self.source_dir), self.source_dir):
             if mode:
                 try:
-                    os.chmod(os.path.join(self.source_dir, filename), mode)
+                    os.chmod(join(self.source_dir, filename), mode)
                 except PermissionError:
                     pass
 
@@ -271,7 +296,7 @@ class FolderEventHandler(BaseEventHandler):
         basedir = basedir or self.source_dir
         lst = []
         for filename in listdir:
-            mime_type = magic.from_file(os.path.join(basedir, filename), mime=True)
+            mime_type = magic.from_file(join(basedir, filename), mime=True)
             if (mime_type in self.mime_types and
                     [pat for pat in self.file_patterns if filename.endswith(pat.split('*')[1])] and
                     len(filename) <= self.filename_max_length):
@@ -333,7 +358,7 @@ class RemoteFolderEventHandler(FolderEventHandler, SSHConnectMixin):
                     self.reconnect()
                     fileinfo = self.put(filename, destination_dir, scp_client)
                 elif 'Permission denied' in str(e):
-                    print('{}, skipping ...'.format(str(e)))
+                    self.output_to_console('{}, skipping ...'.format(str(e)))
                     fileinfo = None  # skip
                 else:
                     raise
@@ -351,9 +376,9 @@ class RemoteFolderEventHandler(FolderEventHandler, SSHConnectMixin):
 
         @return fileinfo dict"""
 
-        source_filename = os.path.join(self.source_dir, filename)
-        destination_filename = os.path.join(destination_dir, filename)
-        if not os.path.isfile(source_filename):
+        source_filename = join(self.source_dir, filename)
+        destination_filename = join(destination_dir, filename)
+        if not isfile(source_filename):
             return None
         fileinfo = self.statinfo(self.source_dir, filename)
         try:
@@ -381,7 +406,7 @@ class RemoteFolderEventHandler(FolderEventHandler, SSHConnectMixin):
         ssh = ssh if ssh else self.ssh
         if path[0:1] == b'~' or path[0:1] == '~':
             _, stdout, _ = ssh.exec_command("pwd")
-            path = os.path.join(stdout.readlines()[0].strip(), path.replace('~/', ''))
+            path = join(stdout.readlines()[0].strip(), path.replace('~/', ''))
         with SFTPClient.from_transport(ssh.get_transport()) as sftp:
             try:
                 sftp.chdir(path)
@@ -407,7 +432,7 @@ class RemoteFolderEventHandler(FolderEventHandler, SSHConnectMixin):
             try:
                 sftp.chdir(remote_directory)  # sub-directory exists
             except IOError:
-                dirname, basename = os.path.split(remote_directory.rstrip('/'))
+                dirname, basename = split(remote_directory.rstrip('/'))
                 self.mkdir_p(sftp, dirname)  # make parent directories
                 sftp.mkdir(basename)  # sub-directory missing, so created it
                 sftp.chdir(basename)

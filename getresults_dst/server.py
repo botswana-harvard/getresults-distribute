@@ -36,6 +36,7 @@ class Server(object):
             observer = Observer()
             observer.schedule(self.event_handler, path=self.event_handler.source_dir)
             self.event_handler.connect()
+            self.event_handler.process_existing_files()
             observer.start()
             try:
                 while True:
