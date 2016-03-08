@@ -69,7 +69,7 @@ Create your django project.
 
 Install getresults-distribute
 	
-	pip install git+https://github.com/botswana-harvard/getresults-distribute@develop#g=getresults_dst
+	pip install git+https://github.com/botswana-harvard/getresults-distribute@develop#egg=getresults_dst
 
 Add to `settings.py`:
 
