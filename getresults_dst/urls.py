@@ -6,6 +6,8 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 #
+from edc_bootstrap.views.edc_datatableview import EdcDatatableView
+from getresults_dst.models import Pending, History
 
 """xx URL Configuration
 
@@ -24,15 +26,26 @@ Including another URLconf
 """
 
 from django.conf import settings
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.contrib import admin
-from django.views.generic import RedirectView
+
+from edc_bootstrap.views import LoginView, LogoutView, HomeView
+from getresults_dst.views import (
+    UploadView, SentHistoryView, PendingView, AcknowledgmentView, LogReaderView, RemoteFolderView)
 
 admin.autodiscover()
 
-urlpatterns = patterns(
-    '',
-    url(r'^$', RedirectView.as_view(url='admin/')),
-    url(r'^admin/', include(admin.site.urls), name='admin'),
+urlpatterns = [
+    url(r'^upload/$', UploadView.as_view(), name='upload_url'),
+    url(r'^history/$', SentHistoryView.as_view(), name='sent_history_url'),
+    url(r'^pending/$', PendingView.as_view(), name='pending_url'),
+    url(r'^acknowledgment/$', AcknowledgmentView.as_view(), name='ack_url'),
+    url(r'^log/$', LogReaderView.as_view(), name='log_url'),
+    url(r'^remotefolder/$', RemoteFolderView.as_view(), name='remote_folder_url'),
+    url(r'^login/', LoginView.as_view(), name='login_url'),
+    url(r'^logout/', LogoutView.as_view(url='/'), name='logout_url'),
+    url(r'^accounts/login/', LoginView.as_view()),
     url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
-)
+    url(r'^admin/', include(admin.site.urls)),
+    url(r'', HomeView.as_view(template_name="home.html"), name='home'),
+]

@@ -24,6 +24,7 @@ class SSHConnectMixin(object):
                     self.hostname,
                     username=self.remote_user,
                     timeout=self.timeout,
+                    banner_timeout=self.banner_timeout,
                     compress=True,
                 )
                 print('Connected to host {}. '.format(self.hostname))

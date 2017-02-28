@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block main%}
+<div class="container-fluid">
+	<div class="starter-template">
+		<h1>Edc: Distribute Results</h1>
+		<p class="lead">Distribute laboratory results for the BCPP project to CDC.</p>
+		<ul class="nav nav-pills nav-stacked">
+			<li><a href="{% url 'upload_url' %}">Uploads</a></li>
+			<li><a href="/history/">Sent History</a></li>
+			<li><a href="{% url 'pending_url' %}">Pending Files</a></li>
+			<li><a href="{% url 'ack_url' %}">Acknowledgments</a></li>
+			<li><a href="{% url 'log_url' %}">Log Reader History</a></li>
+			<li><a href="{% url 'remote_folder_url' %}">Remote Folder Configurations</a></li>
+			
+		</ul>
+	</div>
+</div>
+{% endblock %}

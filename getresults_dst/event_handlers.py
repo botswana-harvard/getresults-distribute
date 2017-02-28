@@ -329,8 +329,9 @@ class RemoteFolderEventHandler(FolderEventHandler, SSHConnectMixin):
     folder_handler = BaseLookupFolderHandler()
     patterns = ['*.*']
 
-    def __init__(self, timeout=None, **kwargs):
+    def __init__(self, timeout=None, banner_timeout=None, **kwargs):
         self.timeout = timeout or 5.0
+        self.banner_timeout = banner_timeout or 45
         self.ssh = None
         super(RemoteFolderEventHandler, self).__init__(**kwargs)
 
